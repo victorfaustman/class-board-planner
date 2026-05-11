@@ -25,6 +25,18 @@
     .wall { position:relative; margin:0 auto; border:2px solid #aab9ca; border-radius:8px; background:linear-gradient(140deg,#f8fafc,#eef2f7); min-width:320px; min-height:180px; }
     .poster { position:absolute; border:1px dashed #9db4cf; border-radius:8px; overflow:hidden; background:rgba(255,255,255,.6); box-shadow:0 2px 8px rgba(15,23,42,.08); cursor:grab; }
     .poster.active { border:2px solid var(--accent); }
+    .resize-handle {
+      position: absolute;
+      right: 4px;
+      bottom: 4px;
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      background: rgba(15,118,110,.9);
+      border: 1px solid #ffffff;
+      cursor: nwse-resize;
+      z-index: 5;
+    }
     .tiles { position:absolute; inset:0; display:grid; gap:2px; pointer-events:none; }
     .tile { border:1px solid rgba(148,163,184,.45); border-radius:3px; font-size:11px; display:flex; align-items:center; justify-content:center; color:rgba(15,23,42,.75); text-shadow:0 1px 0 rgba(255,255,255,.8); background-size:100% 100%; background-repeat:no-repeat; }
     .posterLabel { position:absolute; left:6px; bottom:6px; background:rgba(255,255,255,.88); border-radius:4px; padding:2px 6px; font-size:11px; font-weight:700; }
@@ -93,6 +105,18 @@
       const g = bestGrid(target, p.w/p.h, tileW/tileH);
       p.target = target; p.cols=g.cols; p.rows=g.rows; p.sheets=g.sheets; p.posterW=g.cols*tileW; p.posterH=g.rows*tileH;
     }
+    function recalcPosterFromSizeMm(p, desiredWmm, desiredHmm){
+      const sheet = SHEETS[p.sheet] || SHEETS.A4;
+      const tileW = sheet.w - 13, tileH = sheet.h - 13;
+      const cols = Math.max(1, Math.ceil(desiredWmm / tileW));
+      const rows = Math.max(1, Math.ceil(desiredHmm / tileH));
+      p.cols = cols;
+      p.rows = rows;
+      p.sheets = cols * rows;
+      p.target = p.sheets;
+      p.posterW = cols * tileW;
+      p.posterH = rows * tileH;
+    }
 
     function makePosterFromPending(){
       if(!state.pending) return null;
@@ -132,7 +156,8 @@
           t.style.backgroundSize=`${p.cols*100}% ${p.rows*100}%`; t.style.backgroundPosition=`${bgX}% ${bgY}%`; tiles.appendChild(t);
         }}
         const lbl=document.createElement('div'); lbl.className='posterLabel'; lbl.textContent=`${p.sheet} · ${p.sheets} л.`;
-        el.appendChild(tiles); el.appendChild(lbl); wall.appendChild(el);
+        const handle=document.createElement('div'); handle.className='resize-handle';
+        el.appendChild(tiles); el.appendChild(lbl); el.appendChild(handle); wall.appendChild(el);
       }
       $('totalSheets').textContent=String(total);
       $('stats').textContent = state.posters.length ? `Постеров: ${state.posters.length}.` : 'Добавь хотя бы одно изображение.';
@@ -170,17 +195,49 @@
       const pEl=e.target.closest('.poster'); if(!pEl) return;
       const pid=pEl.dataset.id; const p=state.posters.find(x=>x.id===pid); if(!p) return;
       state.activeId=pid;
-      const pt=pointerToWall(e); state.drag={id:pid,x:pt.x,y:pt.y};
+      const pt=pointerToWall(e);
+      const wp=wallPx();
+      const pp=posterPx(p);
+      const cx=Math.round(p.x*wp.w), cy=Math.round(p.y*wp.h);
+      const left=Math.max(0,Math.min(wp.w-pp.w,cx-pp.w/2));
+      const top=Math.max(0,Math.min(wp.h-pp.h,cy-pp.h/2));
+      if (e.target.closest('.resize-handle')) {
+        state.drag={ kind:'resize', id:pid, left, top, startX:pt.x, startY:pt.y, startW:pxSafe(pp.w), startH:pxSafe(pp.h) };
+      } else {
+        state.drag={ kind:'move', id:pid };
+      }
       render();
     });
     window.addEventListener('mousemove',(e)=>{
       if(!state.drag) return;
       const p=state.posters.find(x=>x.id===state.drag.id); if(!p) return;
       const wp=wallPx(); const pt=pointerToWall(e);
-      p.x=Math.max(0,Math.min(1,pt.x/wp.w)); p.y=Math.max(0,Math.min(1,pt.y/wp.h));
+      if (state.drag.kind === 'resize') {
+        const ratio = p.w / p.h;
+        const delta = Math.max(pt.x - state.drag.startX, pt.y - state.drag.startY);
+        let newW = Math.max(60, state.drag.startW + delta);
+        let newH = newW / ratio;
+        if (state.drag.left + newW > wp.w) {
+          newW = wp.w - state.drag.left;
+          newH = newW / ratio;
+        }
+        if (state.drag.top + newH > wp.h) {
+          newH = wp.h - state.drag.top;
+          newW = newH * ratio;
+        }
+        const newWmm = newW / wp.ppm;
+        const newHmm = newH / wp.ppm;
+        recalcPosterFromSizeMm(p, newWmm, newHmm);
+        const ppNew=posterPx(p);
+        p.x = Math.max(0, Math.min(1, (state.drag.left + ppNew.w / 2) / wp.w));
+        p.y = Math.max(0, Math.min(1, (state.drag.top + ppNew.h / 2) / wp.h));
+      } else {
+        p.x=Math.max(0,Math.min(1,pt.x/wp.w)); p.y=Math.max(0,Math.min(1,pt.y/wp.h));
+      }
       render();
     });
     window.addEventListener('mouseup',()=>{ state.drag=null; });
+    function pxSafe(v){ return Math.max(1, Number(v)||1); }
     window.addEventListener('keydown',(e)=>{
       if((e.key==='Delete' || e.key==='Backspace') && state.activeId){
         state.posters = state.posters.filter(p=>p.id!==state.activeId);
