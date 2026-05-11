@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Генератор оформления класса",
-  description: "Создание настенных композиций и печать плитками A4"
+  title: "Р“РµРЅРµСЂР°С‚РѕСЂ РѕС„РѕСЂРјР»РµРЅРёСЏ РєР»Р°СЃСЃР°",
+  description: "РЎРѕР·РґР°РЅРёРµ РЅР°СЃС‚РµРЅРЅС‹С… РєРѕРјРїРѕР·РёС†РёР№ Рё РїРµС‡Р°С‚СЊ РїР»РёС‚РєР°РјРё A4"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

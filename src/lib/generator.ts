@@ -35,7 +35,7 @@ export function getVariants(input: GeneratorInput): LayoutVariant[] {
   return [
     {
       id: "center",
-      name: "Центр + рамка",
+      name: "Р¦РµРЅС‚СЂ + СЂР°РјРєР°",
       headline,
       accent: "#ea580c",
       bgA: "#fff7ed",
@@ -43,7 +43,7 @@ export function getVariants(input: GeneratorInput): LayoutVariant[] {
     },
     {
       id: "bands",
-      name: "Горизонтальные ленты",
+      name: "Р“РѕСЂРёР·РѕРЅС‚Р°Р»СЊРЅС‹Рµ Р»РµРЅС‚С‹",
       headline,
       accent: "#0f766e",
       bgA: "#f0fdfa",
@@ -51,7 +51,7 @@ export function getVariants(input: GeneratorInput): LayoutVariant[] {
     },
     {
       id: "diagonal",
-      name: "Диагональная динамика",
+      name: "Р”РёР°РіРѕРЅР°Р»СЊРЅР°СЏ РґРёРЅР°РјРёРєР°",
       headline,
       accent: "#1d4ed8",
       bgA: "#eff6ff",

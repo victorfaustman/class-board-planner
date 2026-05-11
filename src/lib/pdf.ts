@@ -77,7 +77,7 @@ export async function createPrintPdf(input: GeneratorInput, variant: LayoutVaria
       });
 
       const tileIndex = r * cols + c + 1;
-      page.drawText(`ÀËÒÚ ${tileIndex}/${cols * rows} (R${r + 1} C${c + 1})`, {
+      page.drawText(`–õ–∏—Å—Ç ${tileIndex}/${cols * rows} (R${r + 1} C${c + 1})`, {
         x: margin + mm(8),
         y: margin + mm(6),
         size: 9,
