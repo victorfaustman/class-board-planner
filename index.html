@@ -25,18 +25,6 @@
     .wall { position:relative; margin:0 auto; border:2px solid #aab9ca; border-radius:8px; background:linear-gradient(140deg,#f8fafc,#eef2f7); min-width:320px; min-height:180px; }
     .poster { position:absolute; border:1px dashed #9db4cf; border-radius:8px; overflow:hidden; background:rgba(255,255,255,.6); box-shadow:0 2px 8px rgba(15,23,42,.08); cursor:grab; }
     .poster.active { border:2px solid var(--accent); }
-    .resize-handle {
-      position: absolute;
-      right: 4px;
-      bottom: 4px;
-      width: 14px;
-      height: 14px;
-      border-radius: 3px;
-      background: rgba(15,118,110,.9);
-      border: 1px solid #ffffff;
-      cursor: nwse-resize;
-      z-index: 5;
-    }
     .tiles { position:absolute; inset:0; display:grid; gap:2px; pointer-events:none; }
     .tile { border:1px solid rgba(148,163,184,.45); border-radius:3px; font-size:11px; display:flex; align-items:center; justify-content:center; color:rgba(15,23,42,.75); text-shadow:0 1px 0 rgba(255,255,255,.8); background-size:100% 100%; background-repeat:no-repeat; }
     .posterLabel { position:absolute; left:6px; bottom:6px; background:rgba(255,255,255,.88); border-radius:4px; padding:2px 6px; font-size:11px; font-weight:700; }
@@ -62,7 +50,6 @@
         <div><label>Тип листа</label><select id="sheetType"><option value="A4">A4</option><option value="A3">A3</option></select></div>
         <div><label>Листы (цель)</label><input id="targetSheets" type="number" value="8" min="1" max="60" /></div>
       </div>
-      <p class="muted" id="fileStatus" style="margin-top:8px;">Файл не выбран.</p>
       <div style="margin-top:10px;"><button id="addPosterBtn" class="primary">Добавить на доску</button></div>
     </section>
 
@@ -91,7 +78,7 @@
 
   <script>
     const SHEETS = { A4:{w:210,h:297}, A3:{w:297,h:420} };
-    const state = { posters:[], pending:null, pendingLoading:false, activeId:null, drag:null };
+    const state = { posters:[], pending:null, activeId:null, drag:null };
     const $ = (id)=>document.getElementById(id);
 
     function id(){ return Math.random().toString(36).slice(2,9); }
@@ -105,18 +92,6 @@
       const tileW = sheet.w - 13, tileH = sheet.h - 13;
       const g = bestGrid(target, p.w/p.h, tileW/tileH);
       p.target = target; p.cols=g.cols; p.rows=g.rows; p.sheets=g.sheets; p.posterW=g.cols*tileW; p.posterH=g.rows*tileH;
-    }
-    function recalcPosterFromSizeMm(p, desiredWmm, desiredHmm){
-      const sheet = SHEETS[p.sheet] || SHEETS.A4;
-      const tileW = sheet.w - 13, tileH = sheet.h - 13;
-      const cols = Math.max(1, Math.ceil(desiredWmm / tileW));
-      const rows = Math.max(1, Math.ceil(desiredHmm / tileH));
-      p.cols = cols;
-      p.rows = rows;
-      p.sheets = cols * rows;
-      p.target = p.sheets;
-      p.posterW = cols * tileW;
-      p.posterH = rows * tileH;
     }
 
     function makePosterFromPending(){
@@ -157,8 +132,7 @@
           t.style.backgroundSize=`${p.cols*100}% ${p.rows*100}%`; t.style.backgroundPosition=`${bgX}% ${bgY}%`; tiles.appendChild(t);
         }}
         const lbl=document.createElement('div'); lbl.className='posterLabel'; lbl.textContent=`${p.sheet} · ${p.sheets} л.`;
-        const handle=document.createElement('div'); handle.className='resize-handle';
-        el.appendChild(tiles); el.appendChild(lbl); el.appendChild(handle); wall.appendChild(el);
+        el.appendChild(tiles); el.appendChild(lbl); wall.appendChild(el);
       }
       $('totalSheets').textContent=String(total);
       $('stats').textContent = state.posters.length ? `Постеров: ${state.posters.length}.` : 'Добавь хотя бы одно изображение.';
@@ -167,44 +141,13 @@
 
     $('imageFile').addEventListener('change',(e)=>{
       const f=e.target.files&&e.target.files[0]; if(!f) return;
-      state.pending = null;
-      state.pendingLoading = true;
-      $('fileStatus').textContent = 'Загружаю изображение...';
-      const rd=new FileReader();
-      rd.onload=()=>{
-        const img=new Image();
-        img.onload=()=>{
-          state.pending={url:rd.result,w:img.naturalWidth,h:img.naturalHeight};
-          state.pendingLoading = false;
-          $('fileStatus').textContent = `Готово: ${f.name} (${img.naturalWidth}x${img.naturalHeight})`;
-          // Fallback UX: сразу добавляем после успешной загрузки.
-          const p = makePosterFromPending();
-          if (p) {
-            state.posters.push(p);
-            state.activeId = p.id;
-            render();
-            $('fileStatus').textContent = `Добавлено: ${f.name} (${img.naturalWidth}x${img.naturalHeight})`;
-          }
-        };
-        img.onerror=()=>{
-          state.pendingLoading = false;
-          $('fileStatus').textContent = 'Ошибка чтения изображения. Выбери другой файл.';
-        };
-        img.src=rd.result;
-      };
-      rd.onerror=()=>{
-        state.pendingLoading = false;
-        $('fileStatus').textContent = 'Не удалось прочитать файл.';
-      };
-      rd.readAsDataURL(f);
+      const rd=new FileReader(); rd.onload=()=>{ const img=new Image(); img.onload=()=>{ state.pending={url:rd.result,w:img.naturalWidth,h:img.naturalHeight}; }; img.src=rd.result; }; rd.readAsDataURL(f);
     });
 
     $('addPosterBtn').addEventListener('click',()=>{
-      if(state.pendingLoading){ alert('Изображение еще загружается, подожди секунду.'); return; }
       if(!state.pending){ alert('Сначала загрузи изображение.'); return; }
       const p=makePosterFromPending(); if(!p) return;
       state.posters.push(p); state.activeId=p.id; render();
-      $('fileStatus').textContent = 'Постер добавлен на доску.';
     });
 
     $('selectedSheets').addEventListener('input',()=>{
@@ -227,49 +170,17 @@
       const pEl=e.target.closest('.poster'); if(!pEl) return;
       const pid=pEl.dataset.id; const p=state.posters.find(x=>x.id===pid); if(!p) return;
       state.activeId=pid;
-      const pt=pointerToWall(e);
-      const wp=wallPx();
-      const pp=posterPx(p);
-      const cx=Math.round(p.x*wp.w), cy=Math.round(p.y*wp.h);
-      const left=Math.max(0,Math.min(wp.w-pp.w,cx-pp.w/2));
-      const top=Math.max(0,Math.min(wp.h-pp.h,cy-pp.h/2));
-      if (e.target.closest('.resize-handle')) {
-        state.drag={ kind:'resize', id:pid, left, top, startX:pt.x, startY:pt.y, startW:pxSafe(pp.w), startH:pxSafe(pp.h) };
-      } else {
-        state.drag={ kind:'move', id:pid };
-      }
+      const pt=pointerToWall(e); state.drag={id:pid,x:pt.x,y:pt.y};
       render();
     });
     window.addEventListener('mousemove',(e)=>{
       if(!state.drag) return;
       const p=state.posters.find(x=>x.id===state.drag.id); if(!p) return;
       const wp=wallPx(); const pt=pointerToWall(e);
-      if (state.drag.kind === 'resize') {
-        const ratio = p.w / p.h;
-        const delta = Math.max(pt.x - state.drag.startX, pt.y - state.drag.startY);
-        let newW = Math.max(60, state.drag.startW + delta);
-        let newH = newW / ratio;
-        if (state.drag.left + newW > wp.w) {
-          newW = wp.w - state.drag.left;
-          newH = newW / ratio;
-        }
-        if (state.drag.top + newH > wp.h) {
-          newH = wp.h - state.drag.top;
-          newW = newH * ratio;
-        }
-        const newWmm = newW / wp.ppm;
-        const newHmm = newH / wp.ppm;
-        recalcPosterFromSizeMm(p, newWmm, newHmm);
-        const ppNew=posterPx(p);
-        p.x = Math.max(0, Math.min(1, (state.drag.left + ppNew.w / 2) / wp.w));
-        p.y = Math.max(0, Math.min(1, (state.drag.top + ppNew.h / 2) / wp.h));
-      } else {
-        p.x=Math.max(0,Math.min(1,pt.x/wp.w)); p.y=Math.max(0,Math.min(1,pt.y/wp.h));
-      }
+      p.x=Math.max(0,Math.min(1,pt.x/wp.w)); p.y=Math.max(0,Math.min(1,pt.y/wp.h));
       render();
     });
     window.addEventListener('mouseup',()=>{ state.drag=null; });
-    function pxSafe(v){ return Math.max(1, Number(v)||1); }
     window.addEventListener('keydown',(e)=>{
       if((e.key==='Delete' || e.key==='Backspace') && state.activeId){
         state.posters = state.posters.filter(p=>p.id!==state.activeId);
@@ -278,42 +189,17 @@
       }
     });
 
-    function loadImage(src){
-      return new Promise((resolve,reject)=>{ const img=new Image(); img.onload=()=>resolve(img); img.onerror=reject; img.src=src; });
-    }
-
-    async function buildPrintPages(){
-      const out=[];
+    function buildPrintHtml(){
+      let pages='';
       for(const p of state.posters){
-        const img=await loadImage(p.url);
-        const tileW=Math.floor(img.naturalWidth / p.cols);
-        const tileH=Math.floor(img.naturalHeight / p.rows);
-        for(let r=0;r<p.rows;r++){
-          for(let c=0;c<p.cols;c++){
-            const n=r*p.cols+c+1;
-            const sx=c*tileW, sy=r*tileH;
-            const sw=(c===p.cols-1) ? (img.naturalWidth-sx) : tileW;
-            const sh=(r===p.rows-1) ? (img.naturalHeight-sy) : tileH;
-            const canvas=document.createElement('canvas');
-            canvas.width=sw; canvas.height=sh;
-            const ctx=canvas.getContext('2d');
-            ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
-            out.push({ label:`${p.sheet} · ${n}/${p.sheets}`, dataUrl:canvas.toDataURL('image/png') });
-          }
+        for(let r=0;r<p.rows;r++) for(let c=0;c<p.cols;c++){
+          const n=r*p.cols+c+1; const bgX=p.cols===1?50:(c/(p.cols-1))*100, bgY=p.rows===1?50:(r/(p.rows-1))*100;
+          pages += `<div class="page"><div class="tile" style="background-image:url('${p.url}');background-size:${p.cols*100}% ${p.rows*100}%;background-position:${bgX}% ${bgY}%"><div class="num">${p.sheet} · ${n}/${p.sheets}</div></div></div>`;
         }
       }
-      return out;
+      return `<!doctype html><html><head><meta charset="UTF-8"><style>@page{size:A4 portrait;margin:8mm}body{margin:0;font-family:Arial}.page{min-height:100vh;display:flex;align-items:center;justify-content:center;page-break-after:always}.page:last-child{page-break-after:auto}.tile{width:100%;aspect-ratio:210/297;border:1px dashed #999;background-repeat:no-repeat;position:relative}.num{position:absolute;left:8px;bottom:8px;background:rgba(255,255,255,.9);padding:2px 6px;border-radius:4px;font-size:12px;font-weight:700}</style></head><body>${pages}</body></html>`;
     }
-
-    async function buildPrintHtml(){
-      const pagesData=await buildPrintPages();
-      let pages='';
-      for(const page of pagesData){
-        pages += `<div class="page"><div class="tile"><img src="${page.dataUrl}" alt="tile"><div class="num">${page.label}</div></div></div>`;
-      }
-      return `<!doctype html><html><head><meta charset="UTF-8"><style>@page{size:A4 portrait;margin:8mm}body{margin:0;font-family:Arial}.page{width:194mm;height:281mm;display:flex;align-items:center;justify-content:center;page-break-after:always}.page:last-child{page-break-after:auto}.tile{width:194mm;height:281mm;border:1px dashed #999;position:relative;background:#fff;overflow:hidden}.tile img{display:block;width:100%;height:100%;object-fit:fill}.num{position:absolute;left:8px;bottom:8px;background:rgba(255,255,255,.92);padding:2px 6px;border-radius:4px;font-size:12px;font-weight:700}</style></head><body>${pages}<script>(async()=>{const imgs=[...document.images];await Promise.all(imgs.map(img=>img.complete?Promise.resolve():new Promise(r=>{img.onload=r;img.onerror=r;})));setTimeout(()=>window.print(),250);})();</script></body></html>`;
-    }
-    $('printBtn').addEventListener('click', async ()=>{ if(!state.posters.length){alert('Добавь хотя бы одно изображение.');return;} const w=window.open('','_blank'); if(!w) return; w.document.write('<!doctype html><html><body style="font-family:Arial;padding:16px;">Готовлю печатные листы...</body></html>'); w.document.close(); const html=await buildPrintHtml(); w.document.open(); w.document.write(html); w.document.close(); });
+    $('printBtn').addEventListener('click',()=>{ if(!state.posters.length){alert('Добавь хотя бы одно изображение.');return;} const w=window.open('','_blank'); if(!w) return; w.document.write(buildPrintHtml()); w.document.close(); setTimeout(()=>w.print(),300); });
 
     ['wallW','wallH','targetSheets','sheetType'].forEach(id=>$(id).addEventListener('input',render));
     render();
