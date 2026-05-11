@@ -3,412 +3,182 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Постер из листов для доски</title>
+  <title>Композиция постеров для доски</title>
   <style>
-    :root {
-      --bg: #f5f6f3;
-      --card: #ffffff;
-      --text: #1f2937;
-      --muted: #64748b;
-      --line: #d6deea;
-      --accent: #0f766e;
-    }
+    :root { --bg:#f5f6f3; --card:#fff; --text:#1f2937; --muted:#64748b; --line:#d6deea; --accent:#0f766e; }
     * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: "Segoe UI", Tahoma, sans-serif;
-      color: var(--text);
-      background:
-        radial-gradient(circle at 15% 20%, #dff7f2 0%, transparent 30%),
-        radial-gradient(circle at 85% 80%, #ffe8ce 0%, transparent 32%),
-        var(--bg);
-    }
-    .wrap { max-width: 1160px; margin: 0 auto; padding: 24px; }
-    .card {
-      background: var(--card);
-      border: 1px solid #e5ebf3;
-      border-radius: 14px;
-      padding: 16px;
-      margin-bottom: 14px;
-      box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
-    }
-    h1 { margin: 0 0 8px; }
-    h2 { margin: 0 0 12px; font-size: 18px; }
-    .muted { margin: 0; color: var(--muted); }
-    .grid { display: grid; gap: 10px; }
-    .fields { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
-    label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; }
-    input, select {
-      width: 100%; border: 1px solid #cdd7e5; border-radius: 10px; padding: 9px 10px; font-size: 14px;
-      background: #fff;
-    }
-    .result strong { color: var(--accent); font-size: 24px; }
-    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
-    button {
-      border: 0;
-      border-radius: 10px;
-      padding: 10px 14px;
-      font-weight: 600;
-      cursor: pointer;
-      background: var(--accent);
-      color: #fff;
-    }
-    button.secondary {
-      background: #e2e8f0;
-      color: #0f172a;
-    }
-    .wallWrap { overflow: auto; border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: #fafafa; }
-    .wall {
-      position: relative;
-      margin: 0 auto;
-      border: 2px solid #aab9ca;
-      border-radius: 8px;
-      background: linear-gradient(140deg, #f8fafc, #eef2f7);
-      min-width: 320px;
-      min-height: 180px;
-    }
-    .poster {
-      position: absolute;
-      border: 1px dashed #9db4cf;
-      border-radius: 8px;
-      overflow: hidden;
-      background: rgba(255,255,255,.6);
-      box-shadow: 0 2px 8px rgba(15,23,42,.08);
-    }
-    .tiles {
-      position: absolute;
-      inset: 0;
-      display: grid;
-      gap: 2px;
-      pointer-events: none;
-    }
-    .tile {
-      border: 1px solid rgba(148, 163, 184, .45);
-      border-radius: 3px;
-      font-size: 11px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: rgba(15, 23, 42, .75);
-      text-shadow: 0 1px 0 rgba(255,255,255,.8);
-      background-size: 100% 100%;
-      background-repeat: no-repeat;
-    }
-    .placeholder {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      color: #64748b;
-      padding: 10px;
-      font-size: 14px;
-    }
+    body { margin:0; font-family:"Segoe UI",Tahoma,sans-serif; color:var(--text); background:radial-gradient(circle at 15% 20%, #dff7f2 0%, transparent 30%),radial-gradient(circle at 85% 80%, #ffe8ce 0%, transparent 32%),var(--bg); }
+    .wrap { max-width:1160px; margin:0 auto; padding:24px; }
+    .card { background:var(--card); border:1px solid #e5ebf3; border-radius:14px; padding:16px; margin-bottom:14px; box-shadow:0 8px 22px rgba(15,23,42,.06); }
+    h1 { margin:0 0 8px; } h2 { margin:0 0 12px; font-size:18px; }
+    .muted { margin:0; color:var(--muted); }
+    .grid { display:grid; gap:10px; } .fields { grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); }
+    label { display:block; font-size:13px; font-weight:600; margin-bottom:5px; }
+    input,select,button { width:100%; border:1px solid #cdd7e5; border-radius:10px; padding:9px 10px; font-size:14px; background:#fff; }
+    button { cursor:pointer; font-weight:600; }
+    .btn-primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+    .btn-ghost { background:#eef2f7; }
+    .row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .result strong { color:var(--accent); font-size:24px; }
+    .wallWrap { overflow:auto; border:1px solid var(--line); border-radius:12px; padding:10px; background:#fafafa; }
+    .wall { position:relative; margin:0 auto; border:2px solid #aab9ca; border-radius:8px; background:linear-gradient(140deg,#f8fafc,#eef2f7); min-width:320px; min-height:180px; }
+    .poster { position:absolute; border:1px dashed #9db4cf; border-radius:8px; overflow:hidden; background:rgba(255,255,255,.6); box-shadow:0 2px 8px rgba(15,23,42,.08); cursor:grab; }
+    .poster.active { border:2px solid var(--accent); }
+    .poster:active { cursor:grabbing; }
+    .tiles { position:absolute; inset:0; display:grid; gap:2px; pointer-events:none; }
+    .tile { border:1px solid rgba(148,163,184,.45); border-radius:3px; font-size:11px; display:flex; align-items:center; justify-content:center; color:rgba(15,23,42,.75); text-shadow:0 1px 0 rgba(255,255,255,.8); background-size:100% 100%; background-repeat:no-repeat; }
+    .posterLabel { position:absolute; left:6px; bottom:6px; background:rgba(255,255,255,.88); border-radius:4px; padding:2px 6px; font-size:11px; font-weight:700; }
+    .list { display:grid; gap:8px; }
+    .item { border:1px solid #d8e2ef; border-radius:8px; padding:8px; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .item.active { border-color:var(--accent); }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Генератор постера из листов</h1>
-    <p class="muted">Загрузи изображение, выбери стену, тип листа и целевое число листов. Приложение подберет раскладку и покажет результат на стене.</p>
+    <h1>Композиция постеров для доски</h1>
+    <p class="muted">Добавляй несколько изображений, двигай их по доске и получай расчет листов для всей композиции.</p>
 
     <section class="card">
-      <h2>1) Параметры</h2>
+      <h2>1) Стена</h2>
       <div class="grid fields">
-        <div>
-          <label>Изображение</label>
-          <input id="imageFile" type="file" accept="image/*" />
-        </div>
-        <div>
-          <label>Ширина стены (см)</label>
-          <input id="wallW" type="number" value="300" min="50" />
-        </div>
-        <div>
-          <label>Высота стены (см)</label>
-          <input id="wallH" type="number" value="120" min="40" />
-        </div>
-        <div>
-          <label>Тип листа</label>
-          <select id="sheetType">
-            <option value="A4">A4 (210 x 297 мм)</option>
-            <option value="A3">A3 (297 x 420 мм)</option>
-          </select>
-        </div>
-        <div>
-          <label>Желаемое число листов</label>
-          <input id="targetSheets" type="number" value="8" min="1" max="60" />
-        </div>
+        <div><label>Ширина стены (см)</label><input id="wallW" type="number" value="300" min="50" /></div>
+        <div><label>Высота стены (см)</label><input id="wallH" type="number" value="120" min="40" /></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>2) Добавить изображение</h2>
+      <div class="grid fields">
+        <div><label>Файл</label><input id="imageFile" type="file" accept="image/*" /></div>
+        <div><label>Тип листа</label><select id="sheetType"><option value="A4">A4</option><option value="A3">A3</option></select></div>
+        <div><label>Желаемое число листов</label><input id="targetSheets" type="number" value="8" min="1" max="60" /></div>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <button id="addPosterBtn" class="btn-primary">Добавить в композицию</button>
+        <button id="removePosterBtn" class="btn-ghost">Удалить выбранное</button>
       </div>
     </section>
 
     <section class="card result">
-      <h2>2) Расчет</h2>
-      <p>Будет листов: <strong id="sheetCount">0</strong></p>
+      <h2>3) Итог</h2>
+      <p>Всего листов: <strong id="totalSheets">0</strong></p>
       <p class="muted" id="stats"></p>
-      <div class="actions">
-        <button id="printBtn">Печать плиток</button>
-        <button id="downloadHtmlBtn" class="secondary">Открыть печатную версию</button>
+      <div class="row" style="margin-top:10px;">
+        <button id="printBtn" class="btn-primary">Печать всех постеров</button>
+        <button id="openPrintBtn" class="btn-ghost">Открыть печатную версию</button>
       </div>
     </section>
 
     <section class="card">
-      <h2>3) Визуализация на стене</h2>
-      <div class="wallWrap">
-        <div id="wall" class="wall">
-          <div id="poster" class="poster">
-            <div id="tiles" class="tiles"></div>
-            <div id="placeholder" class="placeholder">Загрузи изображение, чтобы увидеть раскладку.</div>
-          </div>
-        </div>
-      </div>
+      <h2>4) Доска (перетаскивание)</h2>
+      <div class="wallWrap"><div id="wall" class="wall"></div></div>
       <p class="muted" id="legend" style="margin-top:8px;"></p>
+    </section>
+
+    <section class="card">
+      <h2>5) Слои композиции</h2>
+      <div id="list" class="list"></div>
     </section>
   </div>
 
   <script>
-    const SHEETS = {
-      A4: { w: 210, h: 297 },
-      A3: { w: 297, h: 420 }
-    };
+    const SHEETS = { A4:{w:210,h:297}, A3:{w:297,h:420} };
+    const state = { posters:[], pending:null, activeId:null, drag:null };
 
-    const state = {
-      imageUrl: "",
-      imageW: 0,
-      imageH: 0
-    };
+    function id() { return Math.random().toString(36).slice(2,9); }
+    function inputVals(){ return { wallW:Math.max(50,Number(wallW.value)||300), wallH:Math.max(40,Number(wallH.value)||120), target:Math.max(1,Math.min(60,Number(targetSheets.value)||8)), sheet:sheetType.value }; }
+    function bestGrid(target,imgRatio,tileRatio){ let best={cols:1,rows:1,sheets:1,score:1e9}; for(let c=1;c<=30;c++){for(let r=1;r<=30;r++){const s=c*r;if(s>60) continue; const pr=(c*tileRatio)/r; const score=Math.abs(Math.log(pr/imgRatio))*2 + Math.abs(s-target)/Math.max(1,target); if(score<best.score) best={cols:c,rows:r,sheets:s,score};}} return best; }
 
-    function getInputs() {
-      return {
-        wallW: Math.max(50, Number(document.getElementById("wallW").value) || 300),
-        wallH: Math.max(40, Number(document.getElementById("wallH").value) || 120),
-        targetSheets: Math.max(1, Math.min(60, Number(document.getElementById("targetSheets").value) || 8)),
-        sheetType: document.getElementById("sheetType").value
-      };
+    function makePosterFromPending(){
+      if(!state.pending) return null;
+      const i=inputVals(); const sheet=SHEETS[i.sheet]; const tileW=sheet.w-13, tileH=sheet.h-13; const tileRatio=tileW/tileH; const imgRatio=state.pending.w/state.pending.h;
+      const g=bestGrid(i.target,imgRatio,tileRatio);
+      return { id:id(), url:state.pending.url, w:state.pending.w, h:state.pending.h, sheet:i.sheet, target:i.target, cols:g.cols, rows:g.rows, sheets:g.sheets, posterW:g.cols*tileW, posterH:g.rows*tileH, x:0.5, y:0.5 };
     }
 
-    function bestGrid(target, imgRatio, tileRatio) {
-      let best = { cols: 1, rows: 1, sheets: 1, score: Infinity };
-      const max = Math.max(60, target + 18);
-      for (let cols = 1; cols <= max; cols++) {
-        for (let rows = 1; rows <= max; rows++) {
-          const sheets = cols * rows;
-          if (sheets > 60) continue;
-          const posterRatio = (cols * tileRatio) / rows;
-          const ratioPenalty = Math.abs(Math.log(posterRatio / imgRatio));
-          const countPenalty = Math.abs(sheets - target) / Math.max(1, target);
-          const score = ratioPenalty * 2 + countPenalty;
-          if (score < best.score) best = { cols, rows, sheets, score };
-        }
-      }
-      return best;
-    }
+    function wallPx(){ const i=inputVals(); const wallWmm=i.wallW*10, wallHmm=i.wallH*10; const ppm=Math.min(900/wallWmm,520/wallHmm); return { wallWmm, wallHmm, w:Math.max(320,Math.round(wallWmm*ppm)), h:Math.max(180,Math.round(wallHmm*ppm)), ppm }; }
 
-    function compute() {
-      const i = getInputs();
-      const s = SHEETS[i.sheetType] || SHEETS.A4;
-      const wallWmm = i.wallW * 10;
-      const wallHmm = i.wallH * 10;
-      const margin = 5;
-      const overlap = 3;
-      const tileW = s.w - margin * 2 - overlap;
-      const tileH = s.h - margin * 2 - overlap;
-      const tileRatio = tileW / tileH;
+    function posterPx(p){ const wp=wallPx(); return { w:Math.max(90,Math.round(p.posterW*wp.ppm)), h:Math.max(70,Math.round(p.posterH*wp.ppm)) }; }
 
-      const imgRatio = state.imageW > 0 && state.imageH > 0 ? state.imageW / state.imageH : 16 / 9;
-      const grid = bestGrid(i.targetSheets, imgRatio, tileRatio);
-      const posterWmm = grid.cols * tileW;
-      const posterHmm = grid.rows * tileH;
+    function render(){
+      const wp=wallPx(); wall.style.width=wp.w+'px'; wall.style.height=wp.h+'px'; wall.innerHTML='';
+      let total=0;
+      for(const p of state.posters){
+        total += p.sheets;
+        const pp=posterPx(p);
+        const el=document.createElement('div'); el.className='poster'+(p.id===state.activeId?' active':''); el.dataset.id=p.id;
+        el.style.width=pp.w+'px'; el.style.height=pp.h+'px';
+        const cx=Math.round(p.x*wp.w), cy=Math.round(p.y*wp.h);
+        const left=Math.max(0,Math.min(wp.w-pp.w,cx-pp.w/2));
+        const top=Math.max(0,Math.min(wp.h-pp.h,cy-pp.h/2));
+        el.style.left=left+'px'; el.style.top=top+'px';
 
-      const scaleFit = Math.min(wallWmm / posterWmm, wallHmm / posterHmm, 1);
-      const finalW = posterWmm * scaleFit;
-      const finalH = posterHmm * scaleFit;
-
-      return {
-        ...i,
-        tileW,
-        tileH,
-        wallWmm,
-        wallHmm,
-        imgRatio,
-        cols: grid.cols,
-        rows: grid.rows,
-        sheets: grid.sheets,
-        posterWmm: finalW,
-        posterHmm: finalH
-      };
-    }
-
-    function renderTiles(data) {
-      const wall = document.getElementById("wall");
-      const poster = document.getElementById("poster");
-      const tiles = document.getElementById("tiles");
-      const placeholder = document.getElementById("placeholder");
-
-      const pxPerMm = Math.min(900 / data.wallWmm, 520 / data.wallHmm);
-      const wallPxW = Math.max(320, Math.round(data.wallWmm * pxPerMm));
-      const wallPxH = Math.max(180, Math.round(data.wallHmm * pxPerMm));
-      wall.style.width = wallPxW + "px";
-      wall.style.height = wallPxH + "px";
-
-      const posterPxW = Math.max(100, Math.round(data.posterWmm * pxPerMm));
-      const posterPxH = Math.max(70, Math.round(data.posterHmm * pxPerMm));
-      poster.style.width = posterPxW + "px";
-      poster.style.height = posterPxH + "px";
-      poster.style.left = Math.round((wallPxW - posterPxW) / 2) + "px";
-      poster.style.top = Math.round((wallPxH - posterPxH) / 2) + "px";
-
-      tiles.style.gridTemplateColumns = `repeat(${data.cols}, 1fr)`;
-      tiles.style.gridTemplateRows = `repeat(${data.rows}, 1fr)`;
-      tiles.innerHTML = "";
-
-      for (let r = 0; r < data.rows; r++) {
-        for (let c = 0; c < data.cols; c++) {
-          const idx = r * data.cols + c + 1;
-          const tile = document.createElement("div");
-          tile.className = "tile";
-          tile.textContent = idx;
-          if (state.imageUrl) {
-            const bgX = (data.cols === 1) ? 50 : (c / (data.cols - 1)) * 100;
-            const bgY = (data.rows === 1) ? 50 : (r / (data.rows - 1)) * 100;
-            tile.style.backgroundImage = `linear-gradient(rgba(255,255,255,.15), rgba(255,255,255,.15)), url('${state.imageUrl}')`;
-            tile.style.backgroundSize = `${data.cols * 100}% ${data.rows * 100}%`;
-            tile.style.backgroundPosition = `${bgX}% ${bgY}%`;
-          }
-          tiles.appendChild(tile);
-        }
+        const tiles=document.createElement('div'); tiles.className='tiles'; tiles.style.gridTemplateColumns=`repeat(${p.cols},1fr)`; tiles.style.gridTemplateRows=`repeat(${p.rows},1fr)`;
+        for(let r=0;r<p.rows;r++){ for(let c=0;c<p.cols;c++){ const n=r*p.cols+c+1; const t=document.createElement('div'); t.className='tile'; t.textContent=n;
+          const bgX=p.cols===1?50:(c/(p.cols-1))*100; const bgY=p.rows===1?50:(r/(p.rows-1))*100;
+          t.style.backgroundImage=`linear-gradient(rgba(255,255,255,.15), rgba(255,255,255,.15)), url('${p.url}')`;
+          t.style.backgroundSize=`${p.cols*100}% ${p.rows*100}%`; t.style.backgroundPosition=`${bgX}% ${bgY}%`; tiles.appendChild(t);
+        }}
+        const lbl=document.createElement('div'); lbl.className='posterLabel'; lbl.textContent=`${p.sheet} | ${p.cols}x${p.rows} | ${p.sheets} л.`;
+        el.appendChild(tiles); el.appendChild(lbl); wall.appendChild(el);
       }
 
-      placeholder.style.display = state.imageUrl ? "none" : "flex";
-    }
+      totalSheets.textContent=String(total);
+      stats.textContent = state.posters.length===0 ? 'Добавь хотя бы одно изображение.' : `Элементов: ${state.posters.length}. Листов суммарно: ${total}. Перетаскивай блоки на доске мышкой.`;
+      legend.textContent = 'Каждый блок можно двигать. Выбранный блок подсвечен зеленой рамкой.';
 
-    function render() {
-      const d = compute();
-      document.getElementById("sheetCount").textContent = d.sheets;
-      document.getElementById("stats").textContent = `${d.sheetType}: сетка ${d.cols} x ${d.rows}. Размер постера: ${Math.round(d.posterWmm)} x ${Math.round(d.posterHmm)} мм. Полезная зона листа: ${d.tileW.toFixed(1)} x ${d.tileH.toFixed(1)} мм.`;
-      document.getElementById("legend").textContent = `Раскладка подбирается близко к ${d.targetSheets} листам с сохранением пропорций изображения.`;
-      renderTiles(d);
-    }
-
-    function buildPrintHtml(data) {
-      const safeImage = state.imageUrl || "";
-      let pages = "";
-      for (let r = 0; r < data.rows; r++) {
-        for (let c = 0; c < data.cols; c++) {
-          const idx = r * data.cols + c + 1;
-          const bgX = data.cols === 1 ? 50 : (c / (data.cols - 1)) * 100;
-          const bgY = data.rows === 1 ? 50 : (r / (data.rows - 1)) * 100;
-          pages += `
-            <div class="page">
-              <div class="tile"
-                style="
-                  background-image: url('${safeImage}');
-                  background-size: ${data.cols * 100}% ${data.rows * 100}%;
-                  background-position: ${bgX}% ${bgY}%;
-                ">
-                <div class="num">${idx}</div>
-              </div>
-            </div>
-          `;
-        }
+      list.innerHTML='';
+      for(const p of state.posters){
+        const item=document.createElement('div'); item.className='item'+(p.id===state.activeId?' active':'');
+        item.innerHTML=`<div><strong>${p.sheet}</strong> · ${p.cols}x${p.rows} · ${p.sheets} л.</div><button class="btn-ghost" style="width:auto;">Выбрать</button>`;
+        item.querySelector('button').onclick=()=>{state.activeId=p.id; render();};
+        list.appendChild(item);
       }
-
-      return `<!doctype html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Печать плиток</title>
-  <style>
-    @page { size: A4 portrait; margin: 8mm; }
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: Arial, sans-serif; }
-    .page { width: 100%; min-height: calc(100vh - 1px); page-break-after: always; display: flex; align-items: center; justify-content: center; }
-    .page:last-child { page-break-after: auto; }
-    .tile {
-      width: 100%;
-      aspect-ratio: 210 / 297;
-      border: 1px dashed #999;
-      background-repeat: no-repeat;
-      position: relative;
-    }
-    .num {
-      position: absolute;
-      left: 8px;
-      bottom: 8px;
-      background: rgba(255,255,255,.85);
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      padding: 2px 6px;
-      font-size: 12px;
-      font-weight: 700;
-    }
-  </style>
-</head>
-<body>
-  ${pages}
-</body>
-</html>`;
     }
 
-    document.getElementById("imageFile").addEventListener("change", (e) => {
-      const file = e.target.files && e.target.files[0];
-      if (!file) {
-        state.imageUrl = "";
-        state.imageW = 0;
-        state.imageH = 0;
-        render();
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = () => {
-        const img = new Image();
-        img.onload = () => {
-          state.imageUrl = reader.result;
-          state.imageW = img.naturalWidth;
-          state.imageH = img.naturalHeight;
-          render();
-        };
-        img.src = reader.result;
-      };
-      reader.readAsDataURL(file);
+    imageFile.addEventListener('change',(e)=>{
+      const f=e.target.files&&e.target.files[0]; if(!f) return;
+      const rd=new FileReader(); rd.onload=()=>{ const img=new Image(); img.onload=()=>{ state.pending={url:rd.result,w:img.naturalWidth,h:img.naturalHeight}; }; img.src=rd.result; }; rd.readAsDataURL(f);
     });
 
-    document.querySelectorAll("input, select").forEach((el) => {
-      if (el.id !== "imageFile") {
-        el.addEventListener("input", render);
-      }
+    addPosterBtn.addEventListener('click',()=>{
+      if(!state.pending){ alert('Сначала загрузи изображение.'); return; }
+      const p=makePosterFromPending(); if(!p) return;
+      state.posters.push(p); state.activeId=p.id; render();
     });
 
-    document.getElementById("printBtn").addEventListener("click", () => {
-      if (!state.imageUrl) {
-        alert("Сначала загрузи изображение для печати.");
-        return;
-      }
-      const data = compute();
-      const html = buildPrintHtml(data);
-      const win = window.open("", "_blank");
-      if (!win) return;
-      win.document.open();
-      win.document.write(html);
-      win.document.close();
-      win.focus();
-      setTimeout(() => win.print(), 300);
+    removePosterBtn.addEventListener('click',()=>{
+      if(!state.activeId) return;
+      state.posters=state.posters.filter(p=>p.id!==state.activeId); state.activeId=state.posters[0]?.id||null; render();
     });
 
-    document.getElementById("downloadHtmlBtn").addEventListener("click", () => {
-      if (!state.imageUrl) {
-        alert("Сначала загрузи изображение.");
-        return;
-      }
-      const data = compute();
-      const html = buildPrintHtml(data);
-      const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      window.open(url, "_blank");
-      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    function pointerToWall(e){ const r=wall.getBoundingClientRect(); return { x:e.clientX-r.left, y:e.clientY-r.top }; }
+    wall.addEventListener('mousedown',(e)=>{
+      const pEl=e.target.closest('.poster'); if(!pEl) return;
+      const pid=pEl.dataset.id; const p=state.posters.find(x=>x.id===pid); if(!p) return;
+      state.activeId=pid; const pt=pointerToWall(e); state.drag={id:pid,dx:pt.x,dy:pt.y}; render();
     });
+    window.addEventListener('mousemove',(e)=>{
+      if(!state.drag) return;
+      const p=state.posters.find(x=>x.id===state.drag.id); if(!p) return;
+      const wp=wallPx(); const pt=pointerToWall(e); p.x=Math.max(0,Math.min(1,pt.x/wp.w)); p.y=Math.max(0,Math.min(1,pt.y/wp.h)); render();
+    });
+    window.addEventListener('mouseup',()=>{ state.drag=null; });
 
+    function buildPrintHtml(){
+      let pages='';
+      for(const p of state.posters){
+        for(let r=0;r<p.rows;r++){ for(let c=0;c<p.cols;c++){ const n=r*p.cols+c+1; const bgX=p.cols===1?50:(c/(p.cols-1))*100; const bgY=p.rows===1?50:(r/(p.rows-1))*100;
+          pages += `<div class="page"><div class="tile" style="background-image:url('${p.url}');background-size:${p.cols*100}% ${p.rows*100}%;background-position:${bgX}% ${bgY}%"><div class="num">${p.sheet} · ${n}/${p.sheets}</div></div></div>`;
+        }}
+      }
+      return `<!doctype html><html><head><meta charset="UTF-8"><style>@page{size:A4 portrait;margin:8mm}body{margin:0;font-family:Arial}.page{min-height:100vh;display:flex;align-items:center;justify-content:center;page-break-after:always}.page:last-child{page-break-after:auto}.tile{width:100%;aspect-ratio:210/297;border:1px dashed #999;background-repeat:no-repeat;position:relative}.num{position:absolute;left:8px;bottom:8px;background:rgba(255,255,255,.9);padding:2px 6px;border-radius:4px;font-size:12px;font-weight:700}</style></head><body>${pages}</body></html>`;
+    }
+
+    printBtn.addEventListener('click',()=>{ if(state.posters.length===0){alert('Добавь хотя бы одно изображение.');return;} const w=window.open('','_blank'); if(!w) return; w.document.write(buildPrintHtml()); w.document.close(); setTimeout(()=>w.print(),300); });
+    openPrintBtn.addEventListener('click',()=>{ if(state.posters.length===0){alert('Добавь хотя бы одно изображение.');return;} const b=new Blob([buildPrintHtml()],{type:'text/html;charset=utf-8'}); const u=URL.createObjectURL(b); window.open(u,'_blank'); setTimeout(()=>URL.revokeObjectURL(u),10000); });
+
+    [wallW,wallH,targetSheets,sheetType].forEach(el=>el.addEventListener('input',render));
     render();
   </script>
 </body>
