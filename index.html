@@ -79,7 +79,7 @@
     <section class="hero">
       <div>
         <div class="brand-line">
-          <img src="assets/mascot/logo.png" alt="Логотип GPT для учителя" />
+          <img src="assets/mascot/old-logo.png" alt="Логотип GPT для учителя" />
           <span>GPT для учителя</span>
         </div>
         <h1>Оформление классной доски</h1>
@@ -516,19 +516,11 @@
       try { await downloadPdf(); } catch(e){ alert('Ошибка при создании PDF. Попробуй еще раз.'); }
     });
 
-    const mascotFrames = ['01.png','02.png','03.png','04.png','05.png','06.png','07.png','08.png'];
     const mascotEl = $('heroMascot');
     if (mascotEl) {
-      const frameUrls = mascotFrames.map((f) => `assets/mascot/${f}`);
-      // Preload frames so switching is visible and smooth.
-      frameUrls.forEach((u) => { const img = new Image(); img.src = u; });
-      let mascotIndex = 0;
-      setInterval(() => {
-        mascotIndex = (mascotIndex + 1) % frameUrls.length;
-        mascotEl.src = frameUrls[mascotIndex];
-      }, 3200);
+      mascotEl.src = 'assets/mascot/01.png';
       mascotEl.onerror = () => {
-        mascotEl.src = frameUrls[0];
+        mascotEl.src = 'assets/mascot/01.png';
       };
     }
 
