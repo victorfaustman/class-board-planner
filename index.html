@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Генератор оформления темы</title>
+  <title>Постер из листов для доски</title>
   <style>
     :root {
       --bg: #f5f6f3;
@@ -23,7 +23,7 @@
         radial-gradient(circle at 85% 80%, #ffe8ce 0%, transparent 32%),
         var(--bg);
     }
-    .wrap { max-width: 1100px; margin: 0 auto; padding: 24px; }
+    .wrap { max-width: 1160px; margin: 0 auto; padding: 24px; }
     .card {
       background: var(--card);
       border: 1px solid #e5ebf3;
@@ -40,21 +40,7 @@
     label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; }
     input, select {
       width: 100%; border: 1px solid #cdd7e5; border-radius: 10px; padding: 9px 10px; font-size: 14px;
-    }
-    .headlineBox {
-      border: 1px dashed #bfd3ea;
-      border-radius: 10px;
-      min-height: 64px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 8px;
-      background: linear-gradient(135deg, #f0fdfa, #e0f2fe);
-      font-weight: 800;
-      letter-spacing: 1px;
-      color: #0f172a;
-      text-transform: uppercase;
+      background: #fff;
     }
     .result strong { color: var(--accent); font-size: 24px; }
     .wallWrap { overflow: auto; border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: #fafafa; }
@@ -67,50 +53,57 @@
       min-width: 320px;
       min-height: 180px;
     }
-    .tiles {
+    .poster {
       position: absolute;
-      display: grid;
-      gap: 4px;
-      background: rgba(255, 255, 255, 0.45);
       border: 1px dashed #9db4cf;
       border-radius: 8px;
-      padding: 4px;
+      overflow: hidden;
+      background: rgba(255,255,255,.6);
+      box-shadow: 0 2px 8px rgba(15,23,42,.08);
+    }
+    .tiles {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      gap: 2px;
+      pointer-events: none;
     }
     .tile {
-      border: 1px solid #c2d0e0;
-      border-radius: 4px;
+      border: 1px solid rgba(148, 163, 184, .45);
+      border-radius: 3px;
       font-size: 11px;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #334155;
-      background: #fff;
+      color: rgba(15, 23, 42, .75);
+      text-shadow: 0 1px 0 rgba(255,255,255,.8);
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
     }
-    .titleOverlay {
+    .placeholder {
       position: absolute;
-      transform: translateY(-50%);
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       text-align: center;
-      font-weight: 800;
-      color: #0f172a;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      text-shadow: 0 1px 0 rgba(255,255,255,.85);
-      pointer-events: none;
-      overflow-wrap: anywhere;
+      color: #64748b;
+      padding: 10px;
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Генератор оформления темы</h1>
-    <p class="muted">Введи название темы, размеры стены и тип листа. Приложение покажет, сколько листов нужно и как это будет выглядеть на стене.</p>
+    <h1>Генератор постера из листов</h1>
+    <p class="muted">Загрузи изображение, выбери стену, тип листа и целевое число листов. Приложение подберет раскладку и покажет результат на стене.</p>
 
     <section class="card">
       <h2>1) Параметры</h2>
       <div class="grid fields">
         <div>
-          <label>Название темы / праздника</label>
-          <input id="theme" value="С Днем Учителя" />
+          <label>Изображение</label>
+          <input id="imageFile" type="file" accept="image/*" />
         </div>
         <div>
           <label>Ширина стены (см)</label>
@@ -127,27 +120,27 @@
             <option value="A3">A3 (297 x 420 мм)</option>
           </select>
         </div>
+        <div>
+          <label>Желаемое число листов</label>
+          <input id="targetSheets" type="number" value="8" min="1" max="60" />
+        </div>
       </div>
     </section>
 
-    <section class="card">
-      <h2>2) Заголовок</h2>
-      <div id="headlinePreview" class="headlineBox"></div>
-      <p class="muted" id="headlineMeta" style="margin-top:8px;"></p>
-    </section>
-
     <section class="card result">
-      <h2>3) Расчет листов</h2>
-      <p>Нужно листов: <strong id="sheetsCount">0</strong></p>
-      <p class="muted" id="sheetStats"></p>
+      <h2>2) Расчет</h2>
+      <p>Будет листов: <strong id="sheetCount">0</strong></p>
+      <p class="muted" id="stats"></p>
     </section>
 
     <section class="card">
-      <h2>4) Визуализация стены</h2>
+      <h2>3) Визуализация на стене</h2>
       <div class="wallWrap">
         <div id="wall" class="wall">
-          <div id="tiles" class="tiles"></div>
-          <div id="titleOverlay" class="titleOverlay"></div>
+          <div id="poster" class="poster">
+            <div id="tiles" class="tiles"></div>
+            <div id="placeholder" class="placeholder">Загрузи изображение, чтобы увидеть раскладку.</div>
+          </div>
         </div>
       </div>
       <p class="muted" id="legend" style="margin-top:8px;"></p>
@@ -160,95 +153,154 @@
       A3: { w: 297, h: 420 }
     };
 
-    function clamp(v, min, max) {
-      return Math.max(min, Math.min(max, v));
-    }
+    const state = {
+      imageUrl: "",
+      imageW: 0,
+      imageH: 0
+    };
 
     function getInputs() {
       return {
-        theme: (document.getElementById('theme').value || '').trim() || 'ТЕМА',
-        wallW: Math.max(50, Number(document.getElementById('wallW').value) || 300),
-        wallH: Math.max(40, Number(document.getElementById('wallH').value) || 120),
-        sheetType: document.getElementById('sheetType').value
+        wallW: Math.max(50, Number(document.getElementById("wallW").value) || 300),
+        wallH: Math.max(40, Number(document.getElementById("wallH").value) || 120),
+        targetSheets: Math.max(1, Math.min(60, Number(document.getElementById("targetSheets").value) || 8)),
+        sheetType: document.getElementById("sheetType").value
       };
     }
 
-    function estimateTitleArea(theme, wallWmm, wallHmm) {
-      const letters = theme.replace(/\s+/g, '').length;
-      const lineCount = theme.length > 20 ? 2 : 1;
-      const targetW = clamp(letters * 55 + 220, wallWmm * 0.35, wallWmm * 0.9);
-      const targetH = lineCount === 2 ? wallHmm * 0.35 : wallHmm * 0.22;
-      return { targetW, targetH, lineCount, letters };
+    function bestGrid(target, imgRatio, tileRatio) {
+      let best = { cols: 1, rows: 1, sheets: 1, score: Infinity };
+      const max = Math.max(60, target + 18);
+      for (let cols = 1; cols <= max; cols++) {
+        for (let rows = 1; rows <= max; rows++) {
+          const sheets = cols * rows;
+          if (sheets > 60) continue;
+          const posterRatio = (cols * tileRatio) / rows;
+          const ratioPenalty = Math.abs(Math.log(posterRatio / imgRatio));
+          const countPenalty = Math.abs(sheets - target) / Math.max(1, target);
+          const score = ratioPenalty * 2 + countPenalty;
+          if (score < best.score) best = { cols, rows, sheets, score };
+        }
+      }
+      return best;
     }
 
     function compute() {
       const i = getInputs();
       const s = SHEETS[i.sheetType] || SHEETS.A4;
-
       const wallWmm = i.wallW * 10;
       const wallHmm = i.wallH * 10;
-
       const margin = 5;
       const overlap = 3;
       const tileW = s.w - margin * 2 - overlap;
       const tileH = s.h - margin * 2 - overlap;
+      const tileRatio = tileW / tileH;
 
-      const titleArea = estimateTitleArea(i.theme, wallWmm, wallHmm);
+      const imgRatio = state.imageW > 0 && state.imageH > 0 ? state.imageW / state.imageH : 16 / 9;
+      const grid = bestGrid(i.targetSheets, imgRatio, tileRatio);
+      const posterWmm = grid.cols * tileW;
+      const posterHmm = grid.rows * tileH;
 
-      const cols = Math.max(1, Math.ceil(titleArea.targetW / tileW));
-      const rows = Math.max(1, Math.ceil(titleArea.targetH / tileH));
-      const sheets = cols * rows;
+      const scaleFit = Math.min(wallWmm / posterWmm, wallHmm / posterHmm, 1);
+      const finalW = posterWmm * scaleFit;
+      const finalH = posterHmm * scaleFit;
 
-      return { ...i, wallWmm, wallHmm, tileW, tileH, cols, rows, sheets, titleArea };
+      return {
+        ...i,
+        tileW,
+        tileH,
+        wallWmm,
+        wallHmm,
+        imgRatio,
+        cols: grid.cols,
+        rows: grid.rows,
+        sheets: grid.sheets,
+        posterWmm: finalW,
+        posterHmm: finalH
+      };
+    }
+
+    function renderTiles(data) {
+      const wall = document.getElementById("wall");
+      const poster = document.getElementById("poster");
+      const tiles = document.getElementById("tiles");
+      const placeholder = document.getElementById("placeholder");
+
+      const pxPerMm = Math.min(900 / data.wallWmm, 520 / data.wallHmm);
+      const wallPxW = Math.max(320, Math.round(data.wallWmm * pxPerMm));
+      const wallPxH = Math.max(180, Math.round(data.wallHmm * pxPerMm));
+      wall.style.width = wallPxW + "px";
+      wall.style.height = wallPxH + "px";
+
+      const posterPxW = Math.max(100, Math.round(data.posterWmm * pxPerMm));
+      const posterPxH = Math.max(70, Math.round(data.posterHmm * pxPerMm));
+      poster.style.width = posterPxW + "px";
+      poster.style.height = posterPxH + "px";
+      poster.style.left = Math.round((wallPxW - posterPxW) / 2) + "px";
+      poster.style.top = Math.round((wallPxH - posterPxH) / 2) + "px";
+
+      tiles.style.gridTemplateColumns = `repeat(${data.cols}, 1fr)`;
+      tiles.style.gridTemplateRows = `repeat(${data.rows}, 1fr)`;
+      tiles.innerHTML = "";
+
+      for (let r = 0; r < data.rows; r++) {
+        for (let c = 0; c < data.cols; c++) {
+          const idx = r * data.cols + c + 1;
+          const tile = document.createElement("div");
+          tile.className = "tile";
+          tile.textContent = idx;
+          if (state.imageUrl) {
+            const bgX = (data.cols === 1) ? 50 : (c / (data.cols - 1)) * 100;
+            const bgY = (data.rows === 1) ? 50 : (r / (data.rows - 1)) * 100;
+            tile.style.backgroundImage = `linear-gradient(rgba(255,255,255,.15), rgba(255,255,255,.15)), url('${state.imageUrl}')`;
+            tile.style.backgroundSize = `${data.cols * 100}% ${data.rows * 100}%`;
+            tile.style.backgroundPosition = `${bgX}% ${bgY}%`;
+          }
+          tiles.appendChild(tile);
+        }
+      }
+
+      placeholder.style.display = state.imageUrl ? "none" : "flex";
     }
 
     function render() {
       const d = compute();
-
-      document.getElementById('headlinePreview').textContent = d.theme;
-      document.getElementById('headlineMeta').textContent = `Оценка заголовка: ${Math.round(d.titleArea.targetW)} x ${Math.round(d.titleArea.targetH)} мм.`;
-
-      document.getElementById('sheetsCount').textContent = String(d.sheets);
-      document.getElementById('sheetStats').textContent = `${d.sheetType}: полезная область листа ${d.tileW.toFixed(1)} x ${d.tileH.toFixed(1)} мм. Разбивка заголовка: ${d.cols} x ${d.rows}.`;
-
-      const wall = document.getElementById('wall');
-      const maxW = 900;
-      const pxPerMm = Math.min(maxW / d.wallWmm, 520 / d.wallHmm);
-      const wallPxW = Math.max(320, Math.round(d.wallWmm * pxPerMm));
-      const wallPxH = Math.max(180, Math.round(d.wallHmm * pxPerMm));
-      wall.style.width = wallPxW + 'px';
-      wall.style.height = wallPxH + 'px';
-
-      const tiles = document.getElementById('tiles');
-      tiles.style.gridTemplateColumns = `repeat(${d.cols}, 1fr)`;
-      tiles.style.gridTemplateRows = `repeat(${d.rows}, 1fr)`;
-      const zoneW = Math.round((d.titleArea.targetW / d.wallWmm) * wallPxW);
-      const zoneH = Math.round((d.titleArea.targetH / d.wallHmm) * wallPxH);
-      const left = Math.round((wallPxW - zoneW) / 2);
-      const top = Math.round(wallPxH * 0.26);
-      tiles.style.left = left + 'px';
-      tiles.style.top = top + 'px';
-      tiles.style.width = Math.max(120, zoneW) + 'px';
-      tiles.style.height = Math.max(70, zoneH) + 'px';
-      tiles.innerHTML = '';
-      for (let n = 1; n <= d.sheets; n++) {
-        const el = document.createElement('div');
-        el.className = 'tile';
-        el.textContent = n;
-        tiles.appendChild(el);
-      }
-
-      const overlay = document.getElementById('titleOverlay');
-      overlay.textContent = d.theme;
-      overlay.style.left = left + 'px';
-      overlay.style.top = Math.round(top + Math.max(70, zoneH) / 2) + 'px';
-      overlay.style.width = Math.max(120, zoneW) + 'px';
-      overlay.style.fontSize = Math.max(16, Math.min(56, Math.max(120, zoneW) / (d.theme.length * 0.55))) + 'px';
-
-      document.getElementById('legend').textContent = `На стене показана зона заголовка, разбитая на ${d.sheets} лист(ов) ${d.sheetType}.`;
+      document.getElementById("sheetCount").textContent = d.sheets;
+      document.getElementById("stats").textContent = `${d.sheetType}: сетка ${d.cols} x ${d.rows}. Размер постера: ${Math.round(d.posterWmm)} x ${Math.round(d.posterHmm)} мм. Полезная зона листа: ${d.tileW.toFixed(1)} x ${d.tileH.toFixed(1)} мм.`;
+      document.getElementById("legend").textContent = `Раскладка подбирается близко к ${d.targetSheets} листам с сохранением пропорций изображения.`;
+      renderTiles(d);
     }
 
-    document.querySelectorAll('input, select').forEach((el) => el.addEventListener('input', render));
+    document.getElementById("imageFile").addEventListener("change", (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) {
+        state.imageUrl = "";
+        state.imageW = 0;
+        state.imageH = 0;
+        render();
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          state.imageUrl = reader.result;
+          state.imageW = img.naturalWidth;
+          state.imageH = img.naturalHeight;
+          render();
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.querySelectorAll("input, select").forEach((el) => {
+      if (el.id !== "imageFile") {
+        el.addEventListener("input", render);
+      }
+    });
+
     render();
   </script>
 </body>
