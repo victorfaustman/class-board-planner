@@ -82,7 +82,7 @@
           <img src="assets/mascot/logo.png" alt="Логотип GPT для учителя" />
           <span>GPT для учителя</span>
         </div>
-        <h1>Оформление класса с ИИ-маскотом</h1>
+        <h1>Оформление классной доски</h1>
         <p>Собирай композиции для доски, печатай плитками и вдохновляй учеников стильным визуалом.</p>
         <div class="tg-row">
           <a class="tg-btn" href="https://t.me/gpt_for_teacher" target="_blank" rel="noopener noreferrer">Перейти в Telegram-канал</a>
@@ -99,7 +99,6 @@
     </section>
 
     <h2 style="margin-top:2px;">Редактор композиции</h2>
-    <p class="muted">1) Добавь постеры, 2) Подвинь на доске, 3) Скачай в PDF или печатай.</p>
 
     <section class="card">
       <h2>Стена</h2>
@@ -520,11 +519,17 @@
     const mascotFrames = ['01.png','02.png','03.png','04.png','05.png','06.png','07.png','08.png'];
     const mascotEl = $('heroMascot');
     if (mascotEl) {
+      const frameUrls = mascotFrames.map((f) => `assets/mascot/${f}`);
+      // Preload frames so switching is visible and smooth.
+      frameUrls.forEach((u) => { const img = new Image(); img.src = u; });
       let mascotIndex = 0;
       setInterval(() => {
-        mascotIndex = (mascotIndex + 1) % mascotFrames.length;
-        mascotEl.src = `assets/mascot/${mascotFrames[mascotIndex]}`;
-      }, 4500);
+        mascotIndex = (mascotIndex + 1) % frameUrls.length;
+        mascotEl.src = frameUrls[mascotIndex];
+      }, 3200);
+      mascotEl.onerror = () => {
+        mascotEl.src = frameUrls[0];
+      };
     }
 
     ['wallW','wallH','targetSheets','sheetType'].forEach(id=>$(id).addEventListener('input',render));
