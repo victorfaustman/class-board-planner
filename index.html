@@ -19,6 +19,7 @@
     .btn-primary { background:var(--accent); color:#fff; border-color:var(--accent); }
     .btn-ghost { background:#eef2f7; }
     .row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
     .result strong { color:var(--accent); font-size:24px; }
     .wallWrap { overflow:auto; border:1px solid var(--line); border-radius:12px; padding:10px; background:#fafafa; }
     .wall { position:relative; margin:0 auto; border:2px solid #aab9ca; border-radius:8px; background:linear-gradient(140deg,#f8fafc,#eef2f7); min-width:320px; min-height:180px; }
@@ -57,6 +58,23 @@
         <button id="addPosterBtn" class="btn-primary">Добавить в композицию</button>
         <button id="removePosterBtn" class="btn-ghost">Удалить выбранное</button>
       </div>
+      <div class="row3" style="margin-top:10px;">
+        <div>
+          <label>Листы у выбранного постера</label>
+          <input id="selectedSheets" type="number" value="8" min="1" max="60" />
+        </div>
+        <div>
+          <label>Клик по постеру</label>
+          <select id="clickMode">
+            <option value="select">Выбрать и двигать</option>
+            <option value="delete">Удалять по клику</option>
+          </select>
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <button id="applySheetsBtn" class="btn-primary">Применить листы</button>
+        </div>
+      </div>
     </section>
 
     <section class="card result">
@@ -89,20 +107,37 @@
     function inputVals(){ return { wallW:Math.max(50,Number(wallW.value)||300), wallH:Math.max(40,Number(wallH.value)||120), target:Math.max(1,Math.min(60,Number(targetSheets.value)||8)), sheet:sheetType.value }; }
     function bestGrid(target,imgRatio,tileRatio){ let best={cols:1,rows:1,sheets:1,score:1e9}; for(let c=1;c<=30;c++){for(let r=1;r<=30;r++){const s=c*r;if(s>60) continue; const pr=(c*tileRatio)/r; const score=Math.abs(Math.log(pr/imgRatio))*2 + Math.abs(s-target)/Math.max(1,target); if(score<best.score) best={cols:c,rows:r,sheets:s,score};}} return best; }
 
+    function recalcPoster(p, targetValue){
+      const target = Math.max(1, Math.min(60, Number(targetValue) || p.target || 8));
+      const sheet = SHEETS[p.sheet] || SHEETS.A4;
+      const tileW = sheet.w - 13;
+      const tileH = sheet.h - 13;
+      const tileRatio = tileW / tileH;
+      const imgRatio = p.w / p.h;
+      const g = bestGrid(target, imgRatio, tileRatio);
+      p.target = target;
+      p.cols = g.cols;
+      p.rows = g.rows;
+      p.sheets = g.sheets;
+      p.posterW = g.cols * tileW;
+      p.posterH = g.rows * tileH;
+    }
+
     function makePosterFromPending(){
       if(!state.pending) return null;
-      const i=inputVals(); const sheet=SHEETS[i.sheet]; const tileW=sheet.w-13, tileH=sheet.h-13; const tileRatio=tileW/tileH; const imgRatio=state.pending.w/state.pending.h;
-      const g=bestGrid(i.target,imgRatio,tileRatio);
-      return { id:id(), url:state.pending.url, w:state.pending.w, h:state.pending.h, sheet:i.sheet, target:i.target, cols:g.cols, rows:g.rows, sheets:g.sheets, posterW:g.cols*tileW, posterH:g.rows*tileH, x:0.5, y:0.5 };
+      const i=inputVals();
+      const p = { id:id(), url:state.pending.url, w:state.pending.w, h:state.pending.h, sheet:i.sheet, target:i.target, cols:1, rows:1, sheets:1, posterW:0, posterH:0, x:0.5, y:0.5 };
+      recalcPoster(p, i.target);
+      return p;
     }
 
     function wallPx(){ const i=inputVals(); const wallWmm=i.wallW*10, wallHmm=i.wallH*10; const ppm=Math.min(900/wallWmm,520/wallHmm); return { wallWmm, wallHmm, w:Math.max(320,Math.round(wallWmm*ppm)), h:Math.max(180,Math.round(wallHmm*ppm)), ppm }; }
-
     function posterPx(p){ const wp=wallPx(); return { w:Math.max(90,Math.round(p.posterW*wp.ppm)), h:Math.max(70,Math.round(p.posterH*wp.ppm)) }; }
 
     function render(){
       const wp=wallPx(); wall.style.width=wp.w+'px'; wall.style.height=wp.h+'px'; wall.innerHTML='';
       let total=0;
+
       for(const p of state.posters){
         total += p.sheets;
         const pp=posterPx(p);
@@ -124,8 +159,11 @@
       }
 
       totalSheets.textContent=String(total);
-      stats.textContent = state.posters.length===0 ? 'Добавь хотя бы одно изображение.' : `Элементов: ${state.posters.length}. Листов суммарно: ${total}. Перетаскивай блоки на доске мышкой.`;
-      legend.textContent = 'Каждый блок можно двигать. Выбранный блок подсвечен зеленой рамкой.';
+      stats.textContent = state.posters.length===0 ? 'Добавь хотя бы одно изображение.' : `Элементов: ${state.posters.length}. Листов суммарно: ${total}.`;
+      legend.textContent = clickMode.value === 'delete' ? 'Режим удаления включен: клик по постеру удаляет его.' : 'Клик выбирает постер, мышь перетаскивает.';
+
+      const activePoster = state.posters.find(x => x.id === state.activeId);
+      selectedSheets.value = activePoster ? activePoster.target : inputVals().target;
 
       list.innerHTML='';
       for(const p of state.posters){
@@ -152,25 +190,58 @@
       state.posters=state.posters.filter(p=>p.id!==state.activeId); state.activeId=state.posters[0]?.id||null; render();
     });
 
+    applySheetsBtn.addEventListener('click',()=>{
+      if(!state.activeId) return;
+      const p=state.posters.find(x=>x.id===state.activeId); if(!p) return;
+      recalcPoster(p, selectedSheets.value);
+      render();
+    });
+
+    selectedSheets.addEventListener('input',()=>{
+      if(!state.activeId) return;
+      const p=state.posters.find(x=>x.id===state.activeId); if(!p) return;
+      recalcPoster(p, selectedSheets.value);
+      render();
+    });
+
     function pointerToWall(e){ const r=wall.getBoundingClientRect(); return { x:e.clientX-r.left, y:e.clientY-r.top }; }
     wall.addEventListener('mousedown',(e)=>{
       const pEl=e.target.closest('.poster'); if(!pEl) return;
-      const pid=pEl.dataset.id; const p=state.posters.find(x=>x.id===pid); if(!p) return;
-      state.activeId=pid; const pt=pointerToWall(e); state.drag={id:pid,dx:pt.x,dy:pt.y}; render();
+      const pid=pEl.dataset.id;
+
+      if (clickMode.value === 'delete') {
+        state.posters = state.posters.filter(x => x.id !== pid);
+        state.activeId = state.posters[0]?.id || null;
+        render();
+        return;
+      }
+
+      const p=state.posters.find(x=>x.id===pid); if(!p) return;
+      state.activeId=pid;
+      const pt=pointerToWall(e);
+      state.drag={id:pid,dx:pt.x,dy:pt.y};
+      render();
     });
+
     window.addEventListener('mousemove',(e)=>{
-      if(!state.drag) return;
+      if(!state.drag || clickMode.value === 'delete') return;
       const p=state.posters.find(x=>x.id===state.drag.id); if(!p) return;
       const wp=wallPx(); const pt=pointerToWall(e); p.x=Math.max(0,Math.min(1,pt.x/wp.w)); p.y=Math.max(0,Math.min(1,pt.y/wp.h)); render();
     });
+
     window.addEventListener('mouseup',()=>{ state.drag=null; });
 
     function buildPrintHtml(){
       let pages='';
       for(const p of state.posters){
-        for(let r=0;r<p.rows;r++){ for(let c=0;c<p.cols;c++){ const n=r*p.cols+c+1; const bgX=p.cols===1?50:(c/(p.cols-1))*100; const bgY=p.rows===1?50:(r/(p.rows-1))*100;
-          pages += `<div class="page"><div class="tile" style="background-image:url('${p.url}');background-size:${p.cols*100}% ${p.rows*100}%;background-position:${bgX}% ${bgY}%"><div class="num">${p.sheet} · ${n}/${p.sheets}</div></div></div>`;
-        }}
+        for(let r=0;r<p.rows;r++){
+          for(let c=0;c<p.cols;c++){
+            const n=r*p.cols+c+1;
+            const bgX=p.cols===1?50:(c/(p.cols-1))*100;
+            const bgY=p.rows===1?50:(r/(p.rows-1))*100;
+            pages += `<div class="page"><div class="tile" style="background-image:url('${p.url}');background-size:${p.cols*100}% ${p.rows*100}%;background-position:${bgX}% ${bgY}%"><div class="num">${p.sheet} · ${n}/${p.sheets}</div></div></div>`;
+          }
+        }
       }
       return `<!doctype html><html><head><meta charset="UTF-8"><style>@page{size:A4 portrait;margin:8mm}body{margin:0;font-family:Arial}.page{min-height:100vh;display:flex;align-items:center;justify-content:center;page-break-after:always}.page:last-child{page-break-after:auto}.tile{width:100%;aspect-ratio:210/297;border:1px dashed #999;background-repeat:no-repeat;position:relative}.num{position:absolute;left:8px;bottom:8px;background:rgba(255,255,255,.9);padding:2px 6px;border-radius:4px;font-size:12px;font-weight:700}</style></head><body>${pages}</body></html>`;
     }
@@ -178,7 +249,7 @@
     printBtn.addEventListener('click',()=>{ if(state.posters.length===0){alert('Добавь хотя бы одно изображение.');return;} const w=window.open('','_blank'); if(!w) return; w.document.write(buildPrintHtml()); w.document.close(); setTimeout(()=>w.print(),300); });
     openPrintBtn.addEventListener('click',()=>{ if(state.posters.length===0){alert('Добавь хотя бы одно изображение.');return;} const b=new Blob([buildPrintHtml()],{type:'text/html;charset=utf-8'}); const u=URL.createObjectURL(b); window.open(u,'_blank'); setTimeout(()=>URL.revokeObjectURL(u),10000); });
 
-    [wallW,wallH,targetSheets,sheetType].forEach(el=>el.addEventListener('input',render));
+    [wallW,wallH,targetSheets,sheetType,clickMode].forEach(el=>el.addEventListener('input',render));
     render();
   </script>
 </body>
