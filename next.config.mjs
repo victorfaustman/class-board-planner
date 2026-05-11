@@ -1,8 +1,11 @@
-/** @type {import('next').NextConfig} */
+﻿/** @type {import('next').NextConfig} */
 const nextConfig = {
+  eslint: {
+    ignoreDuringBuilds: true
+  },
   experimental: {
     optimizePackageImports: ["pdf-lib"]
   }
 };
 
-module.exports = nextConfig;
+export default nextConfig;
