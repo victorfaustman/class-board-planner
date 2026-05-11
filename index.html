@@ -66,6 +66,28 @@
       <div style="margin-top:10px;"><button id="addPosterBtn" class="primary">Добавить на доску</button></div>
     </section>
 
+    <section class="card">
+      <h2>Добавить Надпись</h2>
+      <div class="grid fields">
+        <div><label>Текст</label><input id="textValue" value="С Днем Учителя!" /></div>
+        <div>
+          <label>Шрифт</label>
+          <select id="textFont">
+            <option value="Arial">Arial</option>
+            <option value="Verdana">Verdana</option>
+            <option value="Tahoma">Tahoma</option>
+            <option value="Trebuchet MS">Trebuchet MS</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Times New Roman">Times New Roman</option>
+            <option value="Impact">Impact</option>
+            <option value="Comic Sans MS">Comic Sans MS</option>
+          </select>
+        </div>
+        <div><label>Листы (цель)</label><input id="textTargetSheets" type="number" value="4" min="1" max="60" /></div>
+      </div>
+      <div style="margin-top:10px;"><button id="addTextPosterBtn" class="primary">Добавить надпись на доску</button></div>
+    </section>
+
     <section class="card" id="editorCard" style="display:none;">
       <h2>Выбранный Постер</h2>
       <div class="inline">
@@ -74,13 +96,32 @@
         <div><label>Ориентация</label><select id="selectedOrientation"><option value="portrait">Вертикальная</option><option value="landscape">Горизонтальная</option></select></div>
         <button id="deleteSelected" class="danger">Удалить</button>
       </div>
+      <div class="inline" id="textEditorRow" style="margin-top:8px; display:none;">
+        <div><label>Текст</label><input id="selectedTextValue" /></div>
+        <div>
+          <label>Шрифт</label>
+          <select id="selectedTextFont">
+            <option value="Arial">Arial</option>
+            <option value="Verdana">Verdana</option>
+            <option value="Tahoma">Tahoma</option>
+            <option value="Trebuchet MS">Trebuchet MS</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Times New Roman">Times New Roman</option>
+            <option value="Impact">Impact</option>
+            <option value="Comic Sans MS">Comic Sans MS</option>
+          </select>
+        </div>
+      </div>
     </section>
 
     <section class="card result">
       <h2>Итог</h2>
       <p>Всего листов: <strong id="totalSheets">0</strong></p>
       <p class="muted" id="stats"></p>
-      <div style="margin-top:10px;"><button id="printBtn" class="primary">Печать композиции</button></div>
+      <div class="inline" style="margin-top:10px;">
+        <button id="printBtn" class="primary">Печать композиции</button>
+        <button id="pdfBtn">Скачать PDF</button>
+      </div>
     </section>
 
     <section class="card">
@@ -90,6 +131,7 @@
     </section>
   </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script>
     const SHEETS = { A4:{w:210,h:297}, A3:{w:297,h:420} };
     const state = { posters:[], pending:null, pendingLoading:false, activeId:null, drag:null };
@@ -130,9 +172,58 @@
     function makePosterFromPending(){
       if(!state.pending) return null;
       const i=inputVals();
-      const p={ id:id(), url:state.pending.url, w:state.pending.w, h:state.pending.h, sheet:i.sheet, orientation:'portrait', target:i.target, cols:1, rows:1, sheets:1, posterW:0, posterH:0, x:0.5, y:0.5 };
+      const p={ id:id(), type:'image', url:state.pending.url, w:state.pending.w, h:state.pending.h, sheet:i.sheet, orientation:'portrait', target:i.target, cols:1, rows:1, sheets:1, posterW:0, posterH:0, x:0.5, y:0.5 };
       recalcPoster(p, i.target, i.sheet);
       return p;
+    }
+
+    function makeTextPoster(){
+      const txt = ($('textValue').value || '').trim();
+      if(!txt) return null;
+      const i=inputVals();
+      const target = Math.max(1, Math.min(60, Number($('textTargetSheets').value) || 4));
+      const p = {
+        id:id(),
+        type:'text',
+        text:txt,
+        font:$('textFont').value || 'Arial',
+        w:1800,
+        h:600,
+        sheet:i.sheet,
+        orientation:'portrait',
+        target,
+        cols:1,
+        rows:1,
+        sheets:1,
+        posterW:0,
+        posterH:0,
+        x:0.5,
+        y:0.5
+      };
+      recalcPoster(p, target, i.sheet);
+      return p;
+    }
+
+    function getPosterRenderUrl(p){
+      if(p.type !== 'text') return p.url;
+      const canvas = document.createElement('canvas');
+      canvas.width = 1800;
+      canvas.height = 600;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#0f172a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      let size = 180;
+      const family = p.font || 'Arial';
+      ctx.font = `700 ${size}px "${family}"`;
+      while (size > 36 && ctx.measureText((p.text || '').toUpperCase()).width > canvas.width * 0.9) {
+        size -= 6;
+        ctx.font = `700 ${size}px "${family}"`;
+      }
+      ctx.fillText((p.text || '').toUpperCase(), canvas.width / 2, canvas.height / 2);
+      return canvas.toDataURL('image/png');
     }
 
     function wallPx(){ const i=inputVals(); const wallWmm=i.wallW*10, wallHmm=i.wallH*10; const ppm=Math.min(900/wallWmm,520/wallHmm); return { w:Math.max(320,Math.round(wallWmm*ppm)), h:Math.max(180,Math.round(wallHmm*ppm)), ppm }; }
@@ -145,6 +236,12 @@
       $('selectedSheets').value = p.target;
       $('selectedType').value = p.sheet;
       $('selectedOrientation').value = p.orientation || 'portrait';
+      const isText = p.type === 'text';
+      $('textEditorRow').style.display = isText ? 'flex' : 'none';
+      if(isText){
+        $('selectedTextValue').value = p.text || '';
+        $('selectedTextFont').value = p.font || 'Arial';
+      }
     }
 
     function render(){
@@ -162,10 +259,11 @@
         const tiles=document.createElement('div'); tiles.className='tiles'; tiles.style.gridTemplateColumns=`repeat(${p.cols},1fr)`; tiles.style.gridTemplateRows=`repeat(${p.rows},1fr)`;
         for(let r=0;r<p.rows;r++){ for(let c=0;c<p.cols;c++){ const n=r*p.cols+c+1; const t=document.createElement('div'); t.className='tile'; t.textContent=n;
           const bgX=p.cols===1?50:(c/(p.cols-1))*100, bgY=p.rows===1?50:(r/(p.rows-1))*100;
-          t.style.backgroundImage=`linear-gradient(rgba(255,255,255,.15), rgba(255,255,255,.15)), url('${p.url}')`;
+          const renderUrl = getPosterRenderUrl(p);
+          t.style.backgroundImage=`linear-gradient(rgba(255,255,255,.15), rgba(255,255,255,.15)), url('${renderUrl}')`;
           t.style.backgroundSize=`${p.cols*100}% ${p.rows*100}%`; t.style.backgroundPosition=`${bgX}% ${bgY}%`; tiles.appendChild(t);
         }}
-        const lbl=document.createElement('div'); lbl.className='posterLabel'; lbl.textContent=`${p.sheet} ${p.orientation === 'landscape' ? 'гор.' : 'верт.'} · ${p.sheets} л.`;
+        const lbl=document.createElement('div'); lbl.className='posterLabel'; lbl.textContent=`${p.type==='text'?'Текст':'Изобр.'} · ${p.sheet} ${p.orientation === 'landscape' ? 'гор.' : 'верт.'} · ${p.sheets} л.`;
         const handle=document.createElement('div'); handle.className='resize-handle';
         el.appendChild(tiles); el.appendChild(lbl); el.appendChild(handle); wall.appendChild(el);
       }
@@ -215,6 +313,13 @@
       state.posters.push(p); state.activeId=p.id; render();
       $('fileStatus').textContent = 'Постер добавлен на доску.';
     });
+    $('addTextPosterBtn').addEventListener('click',()=>{
+      const p = makeTextPoster();
+      if(!p){ alert('Введи текст надписи.'); return; }
+      state.posters.push(p);
+      state.activeId = p.id;
+      render();
+    });
 
     $('selectedSheets').addEventListener('input',()=>{
       const p=state.posters.find(x=>x.id===state.activeId); if(!p) return;
@@ -228,6 +333,16 @@
       const p=state.posters.find(x=>x.id===state.activeId); if(!p) return;
       p.orientation = $('selectedOrientation').value;
       recalcPoster(p, $('selectedSheets').value, $('selectedType').value);
+      render();
+    });
+    $('selectedTextValue').addEventListener('input',()=>{
+      const p=state.posters.find(x=>x.id===state.activeId); if(!p || p.type!=='text') return;
+      p.text = $('selectedTextValue').value || '';
+      render();
+    });
+    $('selectedTextFont').addEventListener('input',()=>{
+      const p=state.posters.find(x=>x.id===state.activeId); if(!p || p.type!=='text') return;
+      p.font = $('selectedTextFont').value || 'Arial';
       render();
     });
     $('deleteSelected').addEventListener('click',()=>{
@@ -293,14 +408,60 @@
     function buildPrintHtml(){
       let pages='';
       for(const p of state.posters){
+        const renderUrl = getPosterRenderUrl(p);
         for(let r=0;r<p.rows;r++) for(let c=0;c<p.cols;c++){
           const n=r*p.cols+c+1; const bgX=p.cols===1?50:(c/(p.cols-1))*100, bgY=p.rows===1?50:(r/(p.rows-1))*100;
-          pages += `<div class="page"><div class="tile" style="background-image:url('${p.url}');background-size:${p.cols*100}% ${p.rows*100}%;background-position:${bgX}% ${bgY}%"><div class="num">${p.sheet} · ${n}/${p.sheets}</div></div></div>`;
+          pages += `<div class="page"><div class="tile" style="background-image:url('${renderUrl}');background-size:${p.cols*100}% ${p.rows*100}%;background-position:${bgX}% ${bgY}%"><div class="num">${p.sheet} · ${n}/${p.sheets}</div></div></div>`;
         }
       }
       return `<!doctype html><html><head><meta charset="UTF-8"><style>@page{size:A4 portrait;margin:8mm}body{margin:0;font-family:Arial}.page{min-height:100vh;display:flex;align-items:center;justify-content:center;page-break-after:always}.page:last-child{page-break-after:auto}.tile{width:100%;aspect-ratio:210/297;border:1px dashed #999;background-repeat:no-repeat;position:relative}.num{position:absolute;left:8px;bottom:8px;background:rgba(255,255,255,.9);padding:2px 6px;border-radius:4px;font-size:12px;font-weight:700}</style></head><body>${pages}</body></html>`;
     }
     $('printBtn').addEventListener('click',()=>{ if(!state.posters.length){alert('Добавь хотя бы одно изображение.');return;} const w=window.open('','_blank'); if(!w) return; w.document.write(buildPrintHtml()); w.document.close(); setTimeout(()=>w.print(),300); });
+
+    async function downloadPdf(){
+      if(!window.jspdf || !window.jspdf.jsPDF){
+        alert('Не удалось загрузить библиотеку PDF. Проверь интернет и попробуй снова.');
+        return;
+      }
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      let first = true;
+      for(const p of state.posters){
+        const img = new Image();
+        img.src = getPosterRenderUrl(p);
+        await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; });
+        const swBase = Math.floor(img.naturalWidth / p.cols);
+        const shBase = Math.floor(img.naturalHeight / p.rows);
+        for(let r=0;r<p.rows;r++){
+          for(let c=0;c<p.cols;c++){
+            if(!first) doc.addPage('a4', 'portrait');
+            first = false;
+            const sx = c * swBase;
+            const sy = r * shBase;
+            const sw = c === p.cols - 1 ? img.naturalWidth - sx : swBase;
+            const sh = r === p.rows - 1 ? img.naturalHeight - sy : shBase;
+            const canvas = document.createElement('canvas');
+            canvas.width = sw;
+            canvas.height = sh;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+            const dataUrl = canvas.toDataURL('image/png');
+            const margin = 8;
+            const w = 210 - margin * 2;
+            const h = 297 - margin * 2;
+            doc.addImage(dataUrl, 'PNG', margin, margin, w, h, undefined, 'FAST');
+            doc.setFontSize(10);
+            doc.text(`${p.sheet} · ${r*p.cols+c+1}/${p.sheets}`, margin, 294);
+          }
+        }
+      }
+      doc.save('composition.pdf');
+    }
+
+    $('pdfBtn').addEventListener('click', async ()=>{
+      if(!state.posters.length){ alert('Добавь хотя бы один постер.'); return; }
+      try { await downloadPdf(); } catch(e){ alert('Ошибка при создании PDF. Попробуй еще раз.'); }
+    });
 
     ['wallW','wallH','targetSheets','sheetType'].forEach(id=>$(id).addEventListener('input',render));
     render();
