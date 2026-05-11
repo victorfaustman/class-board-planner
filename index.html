@@ -189,17 +189,42 @@
       }
     });
 
-    function buildPrintHtml(){
-      let pages='';
+    function loadImage(src){
+      return new Promise((resolve,reject)=>{ const img=new Image(); img.onload=()=>resolve(img); img.onerror=reject; img.src=src; });
+    }
+
+    async function buildPrintPages(){
+      const out=[];
       for(const p of state.posters){
-        for(let r=0;r<p.rows;r++) for(let c=0;c<p.cols;c++){
-          const n=r*p.cols+c+1; const bgX=p.cols===1?50:(c/(p.cols-1))*100, bgY=p.rows===1?50:(r/(p.rows-1))*100;
-          pages += `<div class="page"><div class="tile" style="background-image:url('${p.url}');background-size:${p.cols*100}% ${p.rows*100}%;background-position:${bgX}% ${bgY}%"><div class="num">${p.sheet} · ${n}/${p.sheets}</div></div></div>`;
+        const img=await loadImage(p.url);
+        const tileW=Math.floor(img.naturalWidth / p.cols);
+        const tileH=Math.floor(img.naturalHeight / p.rows);
+        for(let r=0;r<p.rows;r++){
+          for(let c=0;c<p.cols;c++){
+            const n=r*p.cols+c+1;
+            const sx=c*tileW, sy=r*tileH;
+            const sw=(c===p.cols-1) ? (img.naturalWidth-sx) : tileW;
+            const sh=(r===p.rows-1) ? (img.naturalHeight-sy) : tileH;
+            const canvas=document.createElement('canvas');
+            canvas.width=sw; canvas.height=sh;
+            const ctx=canvas.getContext('2d');
+            ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+            out.push({ label:`${p.sheet} · ${n}/${p.sheets}`, dataUrl:canvas.toDataURL('image/png') });
+          }
         }
       }
-      return `<!doctype html><html><head><meta charset="UTF-8"><style>@page{size:A4 portrait;margin:8mm}body{margin:0;font-family:Arial}.page{min-height:100vh;display:flex;align-items:center;justify-content:center;page-break-after:always}.page:last-child{page-break-after:auto}.tile{width:100%;aspect-ratio:210/297;border:1px dashed #999;background-repeat:no-repeat;position:relative}.num{position:absolute;left:8px;bottom:8px;background:rgba(255,255,255,.9);padding:2px 6px;border-radius:4px;font-size:12px;font-weight:700}</style></head><body>${pages}</body></html>`;
+      return out;
     }
-    $('printBtn').addEventListener('click',()=>{ if(!state.posters.length){alert('Добавь хотя бы одно изображение.');return;} const w=window.open('','_blank'); if(!w) return; w.document.write(buildPrintHtml()); w.document.close(); setTimeout(()=>w.print(),300); });
+
+    async function buildPrintHtml(){
+      const pagesData=await buildPrintPages();
+      let pages='';
+      for(const page of pagesData){
+        pages += `<div class="page"><div class="tile"><img src="${page.dataUrl}" alt="tile"><div class="num">${page.label}</div></div></div>`;
+      }
+      return `<!doctype html><html><head><meta charset="UTF-8"><style>@page{size:A4 portrait;margin:8mm}body{margin:0;font-family:Arial}.page{min-height:100vh;display:flex;align-items:center;justify-content:center;page-break-after:always}.page:last-child{page-break-after:auto}.tile{width:100%;aspect-ratio:210/297;border:1px dashed #999;position:relative;background:#fff}.tile img{width:100%;height:100%;object-fit:fill}.num{position:absolute;left:8px;bottom:8px;background:rgba(255,255,255,.92);padding:2px 6px;border-radius:4px;font-size:12px;font-weight:700}</style></head><body>${pages}</body></html>`;
+    }
+    $('printBtn').addEventListener('click', async ()=>{ if(!state.posters.length){alert('Добавь хотя бы одно изображение.');return;} const w=window.open('','_blank'); if(!w) return; w.document.write('<!doctype html><html><body style="font-family:Arial;padding:16px;">Готовлю печатные листы...</body></html>'); w.document.close(); const html=await buildPrintHtml(); w.document.open(); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),300); });
 
     ['wallW','wallH','targetSheets','sheetType'].forEach(id=>$(id).addEventListener('input',render));
     render();
