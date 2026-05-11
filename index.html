@@ -43,6 +43,20 @@
       background: #fff;
     }
     .result strong { color: var(--accent); font-size: 24px; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+    }
+    button.secondary {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
     .wallWrap { overflow: auto; border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: #fafafa; }
     .wall {
       position: relative;
@@ -131,6 +145,10 @@
       <h2>2) Расчет</h2>
       <p>Будет листов: <strong id="sheetCount">0</strong></p>
       <p class="muted" id="stats"></p>
+      <div class="actions">
+        <button id="printBtn">Печать плиток</button>
+        <button id="downloadHtmlBtn" class="secondary">Открыть печатную версию</button>
+      </div>
     </section>
 
     <section class="card">
@@ -271,6 +289,67 @@
       renderTiles(d);
     }
 
+    function buildPrintHtml(data) {
+      const safeImage = state.imageUrl || "";
+      let pages = "";
+      for (let r = 0; r < data.rows; r++) {
+        for (let c = 0; c < data.cols; c++) {
+          const idx = r * data.cols + c + 1;
+          const bgX = data.cols === 1 ? 50 : (c / (data.cols - 1)) * 100;
+          const bgY = data.rows === 1 ? 50 : (r / (data.rows - 1)) * 100;
+          pages += `
+            <div class="page">
+              <div class="tile"
+                style="
+                  background-image: url('${safeImage}');
+                  background-size: ${data.cols * 100}% ${data.rows * 100}%;
+                  background-position: ${bgX}% ${bgY}%;
+                ">
+                <div class="num">${idx}</div>
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      return `<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Печать плиток</title>
+  <style>
+    @page { size: A4 portrait; margin: 8mm; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Arial, sans-serif; }
+    .page { width: 100%; min-height: calc(100vh - 1px); page-break-after: always; display: flex; align-items: center; justify-content: center; }
+    .page:last-child { page-break-after: auto; }
+    .tile {
+      width: 100%;
+      aspect-ratio: 210 / 297;
+      border: 1px dashed #999;
+      background-repeat: no-repeat;
+      position: relative;
+    }
+    .num {
+      position: absolute;
+      left: 8px;
+      bottom: 8px;
+      background: rgba(255,255,255,.85);
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  ${pages}
+</body>
+</html>`;
+    }
+
     document.getElementById("imageFile").addEventListener("change", (e) => {
       const file = e.target.files && e.target.files[0];
       if (!file) {
@@ -299,6 +378,35 @@
       if (el.id !== "imageFile") {
         el.addEventListener("input", render);
       }
+    });
+
+    document.getElementById("printBtn").addEventListener("click", () => {
+      if (!state.imageUrl) {
+        alert("Сначала загрузи изображение для печати.");
+        return;
+      }
+      const data = compute();
+      const html = buildPrintHtml(data);
+      const win = window.open("", "_blank");
+      if (!win) return;
+      win.document.open();
+      win.document.write(html);
+      win.document.close();
+      win.focus();
+      setTimeout(() => win.print(), 300);
+    });
+
+    document.getElementById("downloadHtmlBtn").addEventListener("click", () => {
+      if (!state.imageUrl) {
+        alert("Сначала загрузи изображение.");
+        return;
+      }
+      const data = compute();
+      const html = buildPrintHtml(data);
+      const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank");
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
     });
 
     render();
