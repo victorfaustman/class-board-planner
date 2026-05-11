@@ -62,7 +62,8 @@
         <div><label>Тип листа</label><select id="sheetType"><option value="A4">A4</option><option value="A3">A3</option></select></div>
         <div><label>Листы (цель)</label><input id="targetSheets" type="number" value="8" min="1" max="60" /></div>
       </div>
-      <div style="margin-top:10px;"><button id="addPosterBtn" class="primary">Добавить на доску</button></div>
+      <p class="muted" id="fileStatus" style="margin-top:8px;">Файл не выбран.</p>
+      <div style="margin-top:10px;"><button id="addPosterBtn" class="primary" disabled>Добавить на доску</button></div>
     </section>
 
     <section class="card" id="editorCard" style="display:none;">
@@ -90,7 +91,7 @@
 
   <script>
     const SHEETS = { A4:{w:210,h:297}, A3:{w:297,h:420} };
-    const state = { posters:[], pending:null, activeId:null, drag:null };
+    const state = { posters:[], pending:null, pendingLoading:false, activeId:null, drag:null };
     const $ = (id)=>document.getElementById(id);
 
     function id(){ return Math.random().toString(36).slice(2,9); }
@@ -166,10 +167,36 @@
 
     $('imageFile').addEventListener('change',(e)=>{
       const f=e.target.files&&e.target.files[0]; if(!f) return;
-      const rd=new FileReader(); rd.onload=()=>{ const img=new Image(); img.onload=()=>{ state.pending={url:rd.result,w:img.naturalWidth,h:img.naturalHeight}; }; img.src=rd.result; }; rd.readAsDataURL(f);
+      state.pending = null;
+      state.pendingLoading = true;
+      $('addPosterBtn').disabled = true;
+      $('fileStatus').textContent = 'Загружаю изображение...';
+      const rd=new FileReader();
+      rd.onload=()=>{
+        const img=new Image();
+        img.onload=()=>{
+          state.pending={url:rd.result,w:img.naturalWidth,h:img.naturalHeight};
+          state.pendingLoading = false;
+          $('addPosterBtn').disabled = false;
+          $('fileStatus').textContent = `Готово: ${f.name} (${img.naturalWidth}x${img.naturalHeight})`;
+        };
+        img.onerror=()=>{
+          state.pendingLoading = false;
+          $('addPosterBtn').disabled = true;
+          $('fileStatus').textContent = 'Ошибка чтения изображения. Выбери другой файл.';
+        };
+        img.src=rd.result;
+      };
+      rd.onerror=()=>{
+        state.pendingLoading = false;
+        $('addPosterBtn').disabled = true;
+        $('fileStatus').textContent = 'Не удалось прочитать файл.';
+      };
+      rd.readAsDataURL(f);
     });
 
     $('addPosterBtn').addEventListener('click',()=>{
+      if(state.pendingLoading){ alert('Изображение еще загружается, подожди секунду.'); return; }
       if(!state.pending){ alert('Сначала загрузи изображение.'); return; }
       const p=makePosterFromPending(); if(!p) return;
       state.posters.push(p); state.activeId=p.id; render();
