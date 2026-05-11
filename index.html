@@ -3,431 +3,468 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Квиз: умножение и деление</title>
+  <title>Композиция для доски</title>
   <style>
-    :root {
-      --bg-1: #f6f4ef;
-      --bg-2: #e7efe9;
-      --card: #fffdf8;
-      --text: #1f2937;
-      --muted: #5b6472;
-      --line: #d4d9df;
-      --accent: #0f766e;
-      --accent-2: #0b5f58;
-      --ok: #166534;
-      --bad: #991b1b;
-    }
-
+    :root { --bg:#f5f6f3; --card:#fff; --text:#1f2937; --muted:#64748b; --line:#d6deea; --accent:#0f766e; }
     * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
-      color: var(--text);
-      background:
-        radial-gradient(circle at 15% 15%, #fef3c7 0%, transparent 28%),
-        radial-gradient(circle at 85% 80%, #dbeafe 0%, transparent 30%),
-        linear-gradient(140deg, var(--bg-1), var(--bg-2));
-      display: grid;
-      place-items: center;
-      padding: 18px;
+    body { margin:0; font-family:"Segoe UI",Tahoma,sans-serif; color:var(--text); background:radial-gradient(circle at 15% 20%, #dff7f2 0%, transparent 30%),radial-gradient(circle at 85% 80%, #ffe8ce 0%, transparent 32%),var(--bg); }
+    .wrap { max-width:1100px; margin:0 auto; padding:20px; }
+    .card { background:var(--card); border:1px solid #e5ebf3; border-radius:14px; padding:14px; margin-bottom:12px; box-shadow:0 8px 20px rgba(15,23,42,.06); }
+    h1 { margin:0 0 8px; font-size:28px; } h2 { margin:0 0 10px; font-size:17px; }
+    .muted { margin:0; color:var(--muted); }
+    .grid { display:grid; gap:10px; } .fields { grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); }
+    label { display:block; font-size:13px; font-weight:600; margin-bottom:5px; }
+    input,select,button { width:100%; border:1px solid #cdd7e5; border-radius:10px; padding:9px 10px; font-size:14px; background:#fff; }
+    button { cursor:pointer; font-weight:600; }
+    .primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+    .inline { display:flex; gap:8px; align-items:end; }
+    .inline > div { flex:1; }
+    .danger { width:auto; background:#fee2e2; border-color:#fecaca; color:#7f1d1d; }
+    .result strong { color:var(--accent); font-size:22px; }
+    .wallWrap { overflow:auto; border:1px solid var(--line); border-radius:12px; padding:10px; background:#fafafa; }
+    .wall { position:relative; margin:0 auto; border:2px solid #aab9ca; border-radius:8px; background:linear-gradient(140deg,#f8fafc,#eef2f7); min-width:320px; min-height:180px; }
+    .poster { position:absolute; border:1px dashed #9db4cf; border-radius:8px; overflow:hidden; background:rgba(255,255,255,.6); box-shadow:0 2px 8px rgba(15,23,42,.08); cursor:grab; }
+    .poster.active { border:2px solid var(--accent); }
+    .resize-handle {
+      position: absolute;
+      right: 4px;
+      bottom: 4px;
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      background: rgba(15,118,110,.9);
+      border: 1px solid #ffffff;
+      cursor: nwse-resize;
+      z-index: 6;
     }
-
-    .app {
-      width: min(760px, 100%);
-      background: var(--card);
-      border: 1px solid #e6e8eb;
-      border-radius: 18px;
-      box-shadow: 0 16px 36px rgba(15, 23, 42, 0.10);
-      padding: 20px;
-    }
-
-    h1 {
-      margin: 0;
-      font-size: clamp(24px, 4vw, 34px);
-      line-height: 1.1;
-    }
-
-    .sub {
-      margin: 8px 0 0;
-      color: var(--muted);
-      font-size: 15px;
-    }
-
-    .panel {
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 14px;
-      margin-top: 16px;
-      background: #fff;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 10px;
-    }
-
-    label {
-      display: block;
-      font-size: 13px;
-      font-weight: 700;
-      margin-bottom: 5px;
-    }
-
-    select, input, button {
-      width: 100%;
-      border: 1px solid #c8d0da;
-      border-radius: 10px;
-      padding: 10px 11px;
-      font-size: 15px;
-      font-family: inherit;
-    }
-
-    button {
-      cursor: pointer;
-      font-weight: 700;
-      transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
-    }
-
-    button:hover { transform: translateY(-1px); }
-
-    .primary {
-      background: var(--accent);
-      color: #fff;
-      border-color: var(--accent);
-      box-shadow: 0 8px 16px rgba(15, 118, 110, .22);
-    }
-
-    .primary:hover { background: var(--accent-2); }
-
-    .ghost {
-      background: #f8fafc;
-      color: var(--text);
-    }
-
-    .row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .row > * {
-      flex: 1;
-      min-width: 120px;
-    }
-
-    .quiz-hidden { display: none; }
-
-    .meta {
-      display: flex;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 8px;
-      font-weight: 700;
-      color: #334155;
-      margin-bottom: 8px;
-    }
-
-    .question {
-      font-size: clamp(34px, 8vw, 54px);
-      text-align: center;
-      margin: 16px 0;
-      letter-spacing: .5px;
-    }
-
-    .feedback {
-      min-height: 24px;
-      font-weight: 700;
-      text-align: center;
-      margin-top: 10px;
-    }
-
-    .ok { color: var(--ok); }
-    .bad { color: var(--bad); }
-
-    .hint {
-      color: var(--muted);
-      font-size: 13px;
-      margin-top: 8px;
-      text-align: center;
-    }
-
-    .results h2 {
-      margin: 0 0 10px;
-    }
-
-    .score {
-      font-size: clamp(26px, 5vw, 38px);
-      font-weight: 800;
-      color: var(--accent);
-      margin: 0;
-    }
-
-    ul {
-      margin: 10px 0 0;
-      padding-left: 20px;
-      color: #374151;
-    }
-
-    @media (max-width: 520px) {
-      .app { padding: 14px; }
-      .panel { padding: 12px; }
-    }
+    .tiles { position:absolute; inset:0; display:grid; gap:2px; pointer-events:none; }
+    .tile { border:1px solid rgba(148,163,184,.45); border-radius:3px; font-size:11px; display:flex; align-items:center; justify-content:center; color:rgba(15,23,42,.75); text-shadow:0 1px 0 rgba(255,255,255,.8); background-size:100% 100%; background-repeat:no-repeat; }
+    .posterLabel { position:absolute; left:6px; bottom:6px; background:rgba(255,255,255,.88); border-radius:4px; padding:2px 6px; font-size:11px; font-weight:700; }
   </style>
 </head>
 <body>
-  <main class="app">
-    <h1>Квиз: таблица умножения и деления</h1>
-    <p class="sub">Тренируйся в удобном темпе: выбери режим, диапазон и количество вопросов.</p>
+  <div class="wrap">
+    <h1>Композиция для доски</h1>
+    <p class="muted">1) Добавь изображение, 2) Подвинь на доске, 3) Напечатай.</p>
 
-    <section id="setup" class="panel">
-      <div class="grid">
-        <div>
-          <label for="mode">Режим</label>
-          <select id="mode">
-            <option value="mix">Смешанный (× и ÷)</option>
-            <option value="mul">Только умножение (×)</option>
-            <option value="div">Только деление (÷)</option>
-          </select>
-        </div>
-        <div>
-          <label for="maxNumber">Максимальное число</label>
-          <select id="maxNumber">
-            <option value="5">до 5</option>
-            <option value="10" selected>до 10</option>
-            <option value="12">до 12</option>
-            <option value="15">до 15</option>
-            <option value="20">до 20</option>
-          </select>
-        </div>
-        <div>
-          <label for="questionsCount">Вопросов</label>
-          <select id="questionsCount">
-            <option value="10">10</option>
-            <option value="15" selected>15</option>
-            <option value="20">20</option>
-            <option value="30">30</option>
-          </select>
-        </div>
-      </div>
-      <div style="margin-top:12px;">
-        <button id="startBtn" class="primary">Начать квиз</button>
+    <section class="card">
+      <h2>Стена</h2>
+      <div class="grid fields">
+        <div><label>Ширина (см)</label><input id="wallW" type="number" value="300" min="50" /></div>
+        <div><label>Высота (см)</label><input id="wallH" type="number" value="120" min="40" /></div>
       </div>
     </section>
 
-    <section id="quiz" class="panel quiz-hidden">
-      <div class="meta">
-        <div id="progress">Вопрос 1/10</div>
-        <div id="timer">Время: 00:00</div>
-        <div id="scoreNow">Верно: 0</div>
+    <section class="card">
+      <h2>Добавить Изображение</h2>
+      <div class="grid fields">
+        <div><label>Файл</label><input id="imageFile" type="file" accept="image/*" /></div>
+        <div><label>Тип листа</label><select id="sheetType"><option value="A4">A4</option><option value="A3">A3</option></select></div>
+        <div><label>Листы (цель)</label><input id="targetSheets" type="number" value="8" min="1" max="60" /></div>
       </div>
-      <div id="question" class="question">7 × 8 = ?</div>
-      <div class="row">
-        <input id="answerInput" type="number" inputmode="numeric" placeholder="Введите ответ" />
-        <button id="submitBtn" class="primary">Ответить</button>
-      </div>
-      <p id="feedback" class="feedback"></p>
-      <p class="hint">Нажми Enter, чтобы ответить быстрее.</p>
+      <p class="muted" id="fileStatus" style="margin-top:8px;">Файл не выбран.</p>
+      <div style="margin-top:10px;"><button id="addPosterBtn" class="primary">Добавить на доску</button></div>
     </section>
 
-    <section id="results" class="panel results quiz-hidden">
-      <h2>Результат</h2>
-      <p id="scoreFinal" class="score">0 / 0</p>
-      <ul>
-        <li id="accLine">Точность: 0%</li>
-        <li id="timeLine">Время: 00:00</li>
-        <li id="markLine">Оценка: -</li>
-      </ul>
-      <div style="margin-top:12px;" class="row">
-        <button id="restartBtn" class="primary">Пройти еще раз</button>
-        <button id="newSettingsBtn" class="ghost">Изменить настройки</button>
+    <section class="card">
+      <h2>Добавить Надпись</h2>
+      <div class="grid fields">
+        <div><label>Текст</label><input id="textValue" value="С Днем Учителя!" /></div>
+        <div>
+          <label>Шрифт</label>
+          <select id="textFont">
+            <option value="Arial">Arial</option>
+            <option value="Verdana">Verdana</option>
+            <option value="Tahoma">Tahoma</option>
+            <option value="Trebuchet MS">Trebuchet MS</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Times New Roman">Times New Roman</option>
+            <option value="Impact">Impact</option>
+            <option value="Comic Sans MS">Comic Sans MS</option>
+          </select>
+        </div>
+        <div><label>Листы (цель)</label><input id="textTargetSheets" type="number" value="4" min="1" max="60" /></div>
+      </div>
+      <div style="margin-top:10px;"><button id="addTextPosterBtn" class="primary">Добавить надпись на доску</button></div>
+    </section>
+
+    <section class="card" id="editorCard" style="display:none;">
+      <h2>Выбранный Постер</h2>
+      <div class="inline">
+        <div><label>Листов</label><input id="selectedSheets" type="number" min="1" max="60" /></div>
+        <div><label>Тип</label><select id="selectedType"><option value="A4">A4</option><option value="A3">A3</option></select></div>
+        <div><label>Ориентация</label><select id="selectedOrientation"><option value="portrait">Вертикальная</option><option value="landscape">Горизонтальная</option></select></div>
+        <button id="deleteSelected" class="danger">Удалить</button>
+      </div>
+      <div class="inline" id="textEditorRow" style="margin-top:8px; display:none;">
+        <div><label>Текст</label><input id="selectedTextValue" /></div>
+        <div>
+          <label>Шрифт</label>
+          <select id="selectedTextFont">
+            <option value="Arial">Arial</option>
+            <option value="Verdana">Verdana</option>
+            <option value="Tahoma">Tahoma</option>
+            <option value="Trebuchet MS">Trebuchet MS</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Times New Roman">Times New Roman</option>
+            <option value="Impact">Impact</option>
+            <option value="Comic Sans MS">Comic Sans MS</option>
+          </select>
+        </div>
       </div>
     </section>
-  </main>
 
+    <section class="card result">
+      <h2>Итог</h2>
+      <p>Всего листов: <strong id="totalSheets">0</strong></p>
+      <p class="muted" id="stats"></p>
+      <div class="inline" style="margin-top:10px;">
+        <button id="printBtn" class="primary">Печать композиции</button>
+        <button id="pdfBtn">Скачать PDF</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Доска</h2>
+      <div class="wallWrap"><div id="wall" class="wall"></div></div>
+      <p class="muted" id="legend" style="margin-top:8px;">Клик по постеру: выбрать. Перетаскивание мышкой: переместить. Delete/Backspace: удалить выбранный.</p>
+    </section>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script>
-    const state = {
-      questions: [],
-      index: 0,
-      correct: 0,
-      startedAt: 0,
-      seconds: 0,
-      timerId: null,
-      finished: false
-    };
+    const SHEETS = { A4:{w:210,h:297}, A3:{w:297,h:420} };
+    const state = { posters:[], pending:null, pendingLoading:false, activeId:null, drag:null };
+    const $ = (id)=>document.getElementById(id);
 
-    const $ = (id) => document.getElementById(id);
+    function id(){ return Math.random().toString(36).slice(2,9); }
+    function inputVals(){ return { wallW:Math.max(50,Number($('wallW').value)||300), wallH:Math.max(40,Number($('wallH').value)||120), target:Math.max(1,Math.min(60,Number($('targetSheets').value)||8)), sheet:$('sheetType').value }; }
+    function bestGrid(target,imgRatio,tileRatio){ let best={cols:1,rows:1,sheets:1,score:1e9}; for(let c=1;c<=30;c++){for(let r=1;r<=30;r++){const s=c*r;if(s>60) continue; const pr=(c*tileRatio)/r; const score=Math.abs(Math.log(pr/imgRatio))*2 + Math.abs(s-target)/Math.max(1,target); if(score<best.score) best={cols:c,rows:r,sheets:s,score};}} return best; }
 
-    const setup = $('setup');
-    const quiz = $('quiz');
-    const results = $('results');
-
-    function rand(min, max) {
-      return Math.floor(Math.random() * (max - min + 1)) + min;
+    function recalcPoster(p, targetValue, sheetType){
+      p.sheet = sheetType || p.sheet;
+      p.orientation = p.orientation || 'portrait';
+      const target = Math.max(1, Math.min(60, Number(targetValue) || p.target || 8));
+      const sheet = SHEETS[p.sheet] || SHEETS.A4;
+      const baseW = p.orientation === 'landscape' ? sheet.h : sheet.w;
+      const baseH = p.orientation === 'landscape' ? sheet.w : sheet.h;
+      const tileW = baseW - 13, tileH = baseH - 13;
+      const g = bestGrid(target, p.w/p.h, tileW/tileH);
+      p.target = target; p.cols=g.cols; p.rows=g.rows; p.sheets=g.sheets; p.posterW=g.cols*tileW; p.posterH=g.rows*tileH;
     }
 
-    function pad(n) {
-      return String(n).padStart(2, '0');
+    function recalcPosterFromSizeMm(p, desiredWmm, desiredHmm){
+      p.orientation = p.orientation || 'portrait';
+      const sheet = SHEETS[p.sheet] || SHEETS.A4;
+      const baseW = p.orientation === 'landscape' ? sheet.h : sheet.w;
+      const baseH = p.orientation === 'landscape' ? sheet.w : sheet.h;
+      const tileW = baseW - 13, tileH = baseH - 13;
+      const cols = Math.max(1, Math.ceil(desiredWmm / tileW));
+      const rows = Math.max(1, Math.ceil(desiredHmm / tileH));
+      p.cols = cols;
+      p.rows = rows;
+      p.sheets = cols * rows;
+      p.target = p.sheets;
+      p.posterW = cols * tileW;
+      p.posterH = rows * tileH;
     }
 
-    function formatTime(totalSeconds) {
-      const m = Math.floor(totalSeconds / 60);
-      const s = totalSeconds % 60;
-      return `${pad(m)}:${pad(s)}`;
+    function makePosterFromPending(){
+      if(!state.pending) return null;
+      const i=inputVals();
+      const p={ id:id(), type:'image', url:state.pending.url, w:state.pending.w, h:state.pending.h, sheet:i.sheet, orientation:'portrait', target:i.target, cols:1, rows:1, sheets:1, posterW:0, posterH:0, x:0.5, y:0.5 };
+      recalcPoster(p, i.target, i.sheet);
+      return p;
     }
 
-    function grade(percent) {
-      if (percent >= 90) return '5 (Отлично)';
-      if (percent >= 75) return '4 (Хорошо)';
-      if (percent >= 55) return '3 (Удовлетворительно)';
-      return '2 (Нужно потренироваться)';
-    }
-
-    function createQuestion(mode, maxN) {
-      const useMul = mode === 'mul' ? true : mode === 'div' ? false : Math.random() < 0.5;
-
-      if (useMul) {
-        const a = rand(2, maxN);
-        const b = rand(2, maxN);
-        return {
-          text: `${a} × ${b} = ?`,
-          answer: a * b
-        };
-      }
-
-      const divisor = rand(2, maxN);
-      const answer = rand(2, maxN);
-      const dividend = divisor * answer;
-      return {
-        text: `${dividend} ÷ ${divisor} = ?`,
-        answer
+    function makeTextPoster(){
+      const txt = ($('textValue').value || '').trim();
+      if(!txt) return null;
+      const i=inputVals();
+      const target = Math.max(1, Math.min(60, Number($('textTargetSheets').value) || 4));
+      const p = {
+        id:id(),
+        type:'text',
+        text:txt,
+        font:$('textFont').value || 'Arial',
+        w:1800,
+        h:600,
+        sheet:i.sheet,
+        orientation:'portrait',
+        target,
+        cols:1,
+        rows:1,
+        sheets:1,
+        posterW:0,
+        posterH:0,
+        x:0.5,
+        y:0.5
       };
+      recalcPoster(p, target, i.sheet);
+      return p;
     }
 
-    function buildQuestions(mode, maxN, count) {
-      const arr = [];
-      for (let i = 0; i < count; i++) {
-        arr.push(createQuestion(mode, maxN));
+    function getPosterRenderUrl(p){
+      if(p.type !== 'text') return p.url;
+      const canvas = document.createElement('canvas');
+      canvas.width = 1800;
+      canvas.height = 600;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#0f172a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      let size = 180;
+      const family = p.font || 'Arial';
+      ctx.font = `700 ${size}px "${family}"`;
+      while (size > 36 && ctx.measureText((p.text || '').toUpperCase()).width > canvas.width * 0.9) {
+        size -= 6;
+        ctx.font = `700 ${size}px "${family}"`;
       }
-      return arr;
+      ctx.fillText((p.text || '').toUpperCase(), canvas.width / 2, canvas.height / 2);
+      return canvas.toDataURL('image/png');
     }
 
-    function showQuestion() {
-      const q = state.questions[state.index];
-      $('question').textContent = q.text;
-      $('progress').textContent = `Вопрос ${state.index + 1}/${state.questions.length}`;
-      $('scoreNow').textContent = `Верно: ${state.correct}`;
-      $('answerInput').value = '';
-      $('answerInput').focus();
-      $('feedback').textContent = '';
-      $('feedback').className = 'feedback';
-    }
+    function wallPx(){ const i=inputVals(); const wallWmm=i.wallW*10, wallHmm=i.wallH*10; const ppm=Math.min(900/wallWmm,520/wallHmm); return { w:Math.max(320,Math.round(wallWmm*ppm)), h:Math.max(180,Math.round(wallHmm*ppm)), ppm }; }
+    function posterPx(p){ const wp=wallPx(); return { w:Math.max(90,Math.round(p.posterW*wp.ppm)), h:Math.max(70,Math.round(p.posterH*wp.ppm)) }; }
 
-    function tickTimer() {
-      state.seconds = Math.floor((Date.now() - state.startedAt) / 1000);
-      $('timer').textContent = `Время: ${formatTime(state.seconds)}`;
-    }
-
-    function startTimer() {
-      stopTimer();
-      state.startedAt = Date.now();
-      state.seconds = 0;
-      tickTimer();
-      state.timerId = setInterval(tickTimer, 1000);
-    }
-
-    function stopTimer() {
-      if (state.timerId) {
-        clearInterval(state.timerId);
-        state.timerId = null;
+    function syncEditor(){
+      const p = state.posters.find(x=>x.id===state.activeId);
+      $('editorCard').style.display = p ? 'block' : 'none';
+      if(!p) return;
+      $('selectedSheets').value = p.target;
+      $('selectedType').value = p.sheet;
+      $('selectedOrientation').value = p.orientation || 'portrait';
+      const isText = p.type === 'text';
+      $('textEditorRow').style.display = isText ? 'flex' : 'none';
+      if(isText){
+        $('selectedTextValue').value = p.text || '';
+        $('selectedTextFont').value = p.font || 'Arial';
       }
     }
 
-    function finishQuiz() {
-      state.finished = true;
-      stopTimer();
-      quiz.classList.add('quiz-hidden');
-      results.classList.remove('quiz-hidden');
+    function render(){
+      const wp=wallPx(); const wall=$('wall'); wall.style.width=wp.w+'px'; wall.style.height=wp.h+'px'; wall.innerHTML='';
+      let total=0;
+      for(const p of state.posters){
+        total += p.sheets;
+        const pp=posterPx(p);
+        const el=document.createElement('div'); el.className='poster'+(p.id===state.activeId?' active':''); el.dataset.id=p.id;
+        el.style.width=pp.w+'px'; el.style.height=pp.h+'px';
+        const cx=Math.round(p.x*wp.w), cy=Math.round(p.y*wp.h);
+        el.style.left=Math.max(0,Math.min(wp.w-pp.w,cx-pp.w/2))+'px';
+        el.style.top=Math.max(0,Math.min(wp.h-pp.h,cy-pp.h/2))+'px';
 
-      const total = state.questions.length;
-      const percent = total ? Math.round((state.correct / total) * 100) : 0;
-
-      $('scoreFinal').textContent = `${state.correct} / ${total}`;
-      $('accLine').textContent = `Точность: ${percent}%`;
-      $('timeLine').textContent = `Время: ${formatTime(state.seconds)}`;
-      $('markLine').textContent = `Оценка: ${grade(percent)}`;
+        const tiles=document.createElement('div'); tiles.className='tiles'; tiles.style.gridTemplateColumns=`repeat(${p.cols},1fr)`; tiles.style.gridTemplateRows=`repeat(${p.rows},1fr)`;
+        for(let r=0;r<p.rows;r++){ for(let c=0;c<p.cols;c++){ const n=r*p.cols+c+1; const t=document.createElement('div'); t.className='tile'; t.textContent=n;
+          const bgX=p.cols===1?50:(c/(p.cols-1))*100, bgY=p.rows===1?50:(r/(p.rows-1))*100;
+          const renderUrl = getPosterRenderUrl(p);
+          t.style.backgroundImage=`linear-gradient(rgba(255,255,255,.15), rgba(255,255,255,.15)), url('${renderUrl}')`;
+          t.style.backgroundSize=`${p.cols*100}% ${p.rows*100}%`; t.style.backgroundPosition=`${bgX}% ${bgY}%`; tiles.appendChild(t);
+        }}
+        const lbl=document.createElement('div'); lbl.className='posterLabel'; lbl.textContent=`${p.type==='text'?'Текст':'Изобр.'} · ${p.sheet} ${p.orientation === 'landscape' ? 'гор.' : 'верт.'} · ${p.sheets} л.`;
+        const handle=document.createElement('div'); handle.className='resize-handle';
+        el.appendChild(tiles); el.appendChild(lbl); el.appendChild(handle); wall.appendChild(el);
+      }
+      $('totalSheets').textContent=String(total);
+      $('stats').textContent = state.posters.length ? `Постеров: ${state.posters.length}.` : 'Добавь хотя бы одно изображение.';
+      syncEditor();
     }
 
-    function submitAnswer() {
-      if (state.finished) return;
-
-      const raw = $('answerInput').value.trim();
-      if (raw === '') {
-        $('feedback').textContent = 'Введите ответ.';
-        $('feedback').className = 'feedback bad';
+    $('imageFile').addEventListener('change',(e)=>{
+      const f=e.target.files&&e.target.files[0];
+      if(!f){
+        state.pending = null;
+        state.pendingLoading = false;
+        $('fileStatus').textContent = 'Файл не выбран.';
         return;
       }
-
-      const value = Number(raw);
-      const q = state.questions[state.index];
-      const ok = value === q.answer;
-
-      if (ok) {
-        state.correct += 1;
-        $('feedback').textContent = 'Верно!';
-        $('feedback').className = 'feedback ok';
-      } else {
-        $('feedback').textContent = `Неверно. Правильный ответ: ${q.answer}`;
-        $('feedback').className = 'feedback bad';
-      }
-
-      $('scoreNow').textContent = `Верно: ${state.correct}`;
-
-      setTimeout(() => {
-        state.index += 1;
-        if (state.index >= state.questions.length) {
-          finishQuiz();
-          return;
-        }
-        showQuestion();
-      }, 700);
-    }
-
-    function startQuiz() {
-      const mode = $('mode').value;
-      const maxN = Number($('maxNumber').value);
-      const count = Number($('questionsCount').value);
-
-      state.questions = buildQuestions(mode, maxN, count);
-      state.index = 0;
-      state.correct = 0;
-      state.finished = false;
-
-      setup.classList.add('quiz-hidden');
-      results.classList.add('quiz-hidden');
-      quiz.classList.remove('quiz-hidden');
-
-      startTimer();
-      showQuestion();
-    }
-
-    function openSettings() {
-      stopTimer();
-      setup.classList.remove('quiz-hidden');
-      quiz.classList.add('quiz-hidden');
-      results.classList.add('quiz-hidden');
-    }
-
-    $('startBtn').addEventListener('click', startQuiz);
-    $('submitBtn').addEventListener('click', submitAnswer);
-    $('answerInput').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') submitAnswer();
+      state.pending = null;
+      state.pendingLoading = true;
+      $('fileStatus').textContent = 'Загружаю изображение...';
+      const rd = new FileReader();
+      rd.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          state.pending = { url: rd.result, w: img.naturalWidth, h: img.naturalHeight };
+          state.pendingLoading = false;
+          $('fileStatus').textContent = `Готово: ${f.name} (${img.naturalWidth}x${img.naturalHeight})`;
+        };
+        img.onerror = () => {
+          state.pending = null;
+          state.pendingLoading = false;
+          $('fileStatus').textContent = 'Ошибка чтения изображения.';
+        };
+        img.src = rd.result;
+      };
+      rd.onerror = () => {
+        state.pending = null;
+        state.pendingLoading = false;
+        $('fileStatus').textContent = 'Не удалось прочитать файл.';
+      };
+      rd.readAsDataURL(f);
     });
-    $('restartBtn').addEventListener('click', startQuiz);
-    $('newSettingsBtn').addEventListener('click', openSettings);
+
+    $('addPosterBtn').addEventListener('click',()=>{
+      if(state.pendingLoading){ alert('Подожди, изображение еще загружается.'); return; }
+      if(!state.pending){ alert('Сначала загрузи изображение.'); return; }
+      const p=makePosterFromPending(); if(!p) return;
+      state.posters.push(p); state.activeId=p.id; render();
+      $('fileStatus').textContent = 'Постер добавлен на доску.';
+    });
+    $('addTextPosterBtn').addEventListener('click',()=>{
+      const p = makeTextPoster();
+      if(!p){ alert('Введи текст надписи.'); return; }
+      state.posters.push(p);
+      state.activeId = p.id;
+      render();
+    });
+
+    $('selectedSheets').addEventListener('input',()=>{
+      const p=state.posters.find(x=>x.id===state.activeId); if(!p) return;
+      recalcPoster(p, $('selectedSheets').value, $('selectedType').value); render();
+    });
+    $('selectedType').addEventListener('input',()=>{
+      const p=state.posters.find(x=>x.id===state.activeId); if(!p) return;
+      recalcPoster(p, $('selectedSheets').value, $('selectedType').value); render();
+    });
+    $('selectedOrientation').addEventListener('input',()=>{
+      const p=state.posters.find(x=>x.id===state.activeId); if(!p) return;
+      p.orientation = $('selectedOrientation').value;
+      recalcPoster(p, $('selectedSheets').value, $('selectedType').value);
+      render();
+    });
+    $('selectedTextValue').addEventListener('input',()=>{
+      const p=state.posters.find(x=>x.id===state.activeId); if(!p || p.type!=='text') return;
+      p.text = $('selectedTextValue').value || '';
+      render();
+    });
+    $('selectedTextFont').addEventListener('input',()=>{
+      const p=state.posters.find(x=>x.id===state.activeId); if(!p || p.type!=='text') return;
+      p.font = $('selectedTextFont').value || 'Arial';
+      render();
+    });
+    $('deleteSelected').addEventListener('click',()=>{
+      if(!state.activeId) return;
+      state.posters = state.posters.filter(p=>p.id!==state.activeId);
+      state.activeId = state.posters[0]?.id || null;
+      render();
+    });
+
+    function pointerToWall(e){ const r=$('wall').getBoundingClientRect(); return { x:e.clientX-r.left, y:e.clientY-r.top }; }
+    $('wall').addEventListener('mousedown',(e)=>{
+      const pEl=e.target.closest('.poster'); if(!pEl) return;
+      const pid=pEl.dataset.id; const p=state.posters.find(x=>x.id===pid); if(!p) return;
+      state.activeId=pid;
+      const pt=pointerToWall(e);
+      const wp=wallPx();
+      const pp=posterPx(p);
+      const cx=Math.round(p.x*wp.w), cy=Math.round(p.y*wp.h);
+      const left=Math.max(0,Math.min(wp.w-pp.w,cx-pp.w/2));
+      const top=Math.max(0,Math.min(wp.h-pp.h,cy-pp.h/2));
+      if (e.target.closest('.resize-handle')) {
+        state.drag={kind:'resize', id:pid, startX:pt.x, startY:pt.y, left, top, startW:pp.w, startH:pp.h};
+      } else {
+        state.drag={kind:'move', id:pid};
+      }
+      render();
+    });
+    window.addEventListener('mousemove',(e)=>{
+      if(!state.drag) return;
+      const p=state.posters.find(x=>x.id===state.drag.id); if(!p) return;
+      const wp=wallPx(); const pt=pointerToWall(e);
+      if (state.drag.kind === 'resize') {
+        const ratio = p.w / p.h;
+        const delta = Math.max(pt.x - state.drag.startX, pt.y - state.drag.startY);
+        let newW = Math.max(60, state.drag.startW + delta);
+        let newH = newW / ratio;
+        if (state.drag.left + newW > wp.w) {
+          newW = wp.w - state.drag.left;
+          newH = newW / ratio;
+        }
+        if (state.drag.top + newH > wp.h) {
+          newH = wp.h - state.drag.top;
+          newW = newH * ratio;
+        }
+        recalcPosterFromSizeMm(p, newW / wp.ppm, newH / wp.ppm);
+        const ppNew = posterPx(p);
+        p.x = Math.max(0, Math.min(1, (state.drag.left + ppNew.w / 2) / wp.w));
+        p.y = Math.max(0, Math.min(1, (state.drag.top + ppNew.h / 2) / wp.h));
+      } else {
+        p.x=Math.max(0,Math.min(1,pt.x/wp.w)); p.y=Math.max(0,Math.min(1,pt.y/wp.h));
+      }
+      render();
+    });
+    window.addEventListener('mouseup',()=>{ state.drag=null; });
+    window.addEventListener('keydown',(e)=>{
+      if((e.key==='Delete' || e.key==='Backspace') && state.activeId){
+        state.posters = state.posters.filter(p=>p.id!==state.activeId);
+        state.activeId = state.posters[0]?.id || null;
+        render();
+      }
+    });
+
+    function buildPrintHtml(){
+      let pages='';
+      for(const p of state.posters){
+        const renderUrl = getPosterRenderUrl(p);
+        for(let r=0;r<p.rows;r++) for(let c=0;c<p.cols;c++){
+          const n=r*p.cols+c+1; const bgX=p.cols===1?50:(c/(p.cols-1))*100, bgY=p.rows===1?50:(r/(p.rows-1))*100;
+          pages += `<div class="page"><div class="tile" style="background-image:url('${renderUrl}');background-size:${p.cols*100}% ${p.rows*100}%;background-position:${bgX}% ${bgY}%"><div class="num">${p.sheet} · ${n}/${p.sheets}</div></div></div>`;
+        }
+      }
+      return `<!doctype html><html><head><meta charset="UTF-8"><style>@page{size:A4 portrait;margin:8mm}body{margin:0;font-family:Arial}.page{min-height:100vh;display:flex;align-items:center;justify-content:center;page-break-after:always}.page:last-child{page-break-after:auto}.tile{width:100%;aspect-ratio:210/297;border:1px dashed #999;background-repeat:no-repeat;position:relative}.num{position:absolute;left:8px;bottom:8px;background:rgba(255,255,255,.9);padding:2px 6px;border-radius:4px;font-size:12px;font-weight:700}</style></head><body>${pages}</body></html>`;
+    }
+    $('printBtn').addEventListener('click',()=>{ if(!state.posters.length){alert('Добавь хотя бы одно изображение.');return;} const w=window.open('','_blank'); if(!w) return; w.document.write(buildPrintHtml()); w.document.close(); setTimeout(()=>w.print(),300); });
+
+    async function downloadPdf(){
+      if(!window.jspdf || !window.jspdf.jsPDF){
+        alert('Не удалось загрузить библиотеку PDF. Проверь интернет и попробуй снова.');
+        return;
+      }
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      let first = true;
+      for(const p of state.posters){
+        const img = new Image();
+        img.src = getPosterRenderUrl(p);
+        await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; });
+        const swBase = Math.floor(img.naturalWidth / p.cols);
+        const shBase = Math.floor(img.naturalHeight / p.rows);
+        for(let r=0;r<p.rows;r++){
+          for(let c=0;c<p.cols;c++){
+            if(!first) doc.addPage('a4', 'portrait');
+            first = false;
+            const sx = c * swBase;
+            const sy = r * shBase;
+            const sw = c === p.cols - 1 ? img.naturalWidth - sx : swBase;
+            const sh = r === p.rows - 1 ? img.naturalHeight - sy : shBase;
+            const canvas = document.createElement('canvas');
+            canvas.width = sw;
+            canvas.height = sh;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+            const dataUrl = canvas.toDataURL('image/png');
+            const margin = 8;
+            const w = 210 - margin * 2;
+            const h = 297 - margin * 2;
+            doc.addImage(dataUrl, 'PNG', margin, margin, w, h, undefined, 'FAST');
+            doc.setFontSize(10);
+            doc.text(`${p.sheet} · ${r*p.cols+c+1}/${p.sheets}`, margin, 294);
+          }
+        }
+      }
+      doc.save('composition.pdf');
+    }
+
+    $('pdfBtn').addEventListener('click', async ()=>{
+      if(!state.posters.length){ alert('Добавь хотя бы один постер.'); return; }
+      try { await downloadPdf(); } catch(e){ alert('Ошибка при создании PDF. Попробуй еще раз.'); }
+    });
+
+    ['wallW','wallH','targetSheets','sheetType'].forEach(id=>$(id).addEventListener('input',render));
+    render();
   </script>
 </body>
 </html>
-
