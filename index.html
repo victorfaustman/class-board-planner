@@ -5,24 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Композиция для доски</title>
   <style>
-    :root { --bg:#f5f6f3; --card:#fff; --text:#1f2937; --muted:#64748b; --line:#d6deea; --accent:#0f766e; }
+    :root {
+      --bg:#f9e7d5;
+      --card:#fff9f2;
+      --text:#2f2326;
+      --muted:#8e6f63;
+      --line:#f0cbb0;
+      --accent:#cf7f4f;
+      --accent-soft:#e8a77f;
+      --ink:#4b3037;
+    }
     * { box-sizing: border-box; }
-    body { margin:0; font-family:"Segoe UI",Tahoma,sans-serif; color:var(--text); background:radial-gradient(circle at 15% 20%, #dff7f2 0%, transparent 30%),radial-gradient(circle at 85% 80%, #ffe8ce 0%, transparent 32%),var(--bg); }
+    body { margin:0; font-family:"Segoe UI",Tahoma,sans-serif; color:var(--text); background:linear-gradient(160deg, #fbe9d8 0%, #f7dfc8 55%, #f5d7be 100%); }
     .wrap { max-width:1100px; margin:0 auto; padding:20px; }
-    .card { background:var(--card); border:1px solid #e5ebf3; border-radius:14px; padding:14px; margin-bottom:12px; box-shadow:0 8px 20px rgba(15,23,42,.06); }
-    h1 { margin:0 0 8px; font-size:28px; } h2 { margin:0 0 10px; font-size:17px; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px; margin-bottom:12px; box-shadow:0 8px 20px rgba(106,58,33,.08); }
+    h1 { margin:0 0 8px; font-size:36px; line-height:1.08; color:var(--ink); } h2 { margin:0 0 10px; font-size:17px; color:var(--ink); }
     .muted { margin:0; color:var(--muted); }
     .grid { display:grid; gap:10px; } .fields { grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); }
     label { display:block; font-size:13px; font-weight:600; margin-bottom:5px; }
-    input,select,button { width:100%; border:1px solid #cdd7e5; border-radius:10px; padding:9px 10px; font-size:14px; background:#fff; }
+    input,select,button { width:100%; border:1px solid #ddb69a; border-radius:10px; padding:9px 10px; font-size:14px; background:#fffefc; }
     button { cursor:pointer; font-weight:600; }
     .primary { background:var(--accent); color:#fff; border-color:var(--accent); }
     .inline { display:flex; gap:8px; align-items:end; }
     .inline > div { flex:1; }
     .danger { width:auto; background:#fee2e2; border-color:#fecaca; color:#7f1d1d; }
     .result strong { color:var(--accent); font-size:22px; }
-    .wallWrap { overflow:auto; border:1px solid var(--line); border-radius:12px; padding:10px; background:#fafafa; }
-    .wall { position:relative; margin:0 auto; border:2px solid #aab9ca; border-radius:8px; background:linear-gradient(140deg,#f8fafc,#eef2f7); min-width:320px; min-height:180px; }
+    .wallWrap { overflow:auto; border:1px solid var(--line); border-radius:12px; padding:10px; background:#fff6ec; }
+    .wall { position:relative; margin:0 auto; border:2px solid #d8ab8c; border-radius:8px; background:linear-gradient(140deg,#fff8ef,#ffe8d7); min-width:320px; min-height:180px; }
     .poster { position:absolute; border:1px dashed #9db4cf; border-radius:8px; overflow:hidden; background:rgba(255,255,255,.6); box-shadow:0 2px 8px rgba(15,23,42,.08); cursor:grab; }
     .poster.active { border:2px solid var(--accent); }
     .resize-handle {
@@ -40,12 +49,57 @@
     .tiles { position:absolute; inset:0; display:grid; gap:2px; pointer-events:none; }
     .tile { border:1px solid rgba(148,163,184,.45); border-radius:3px; font-size:11px; display:flex; align-items:center; justify-content:center; color:rgba(15,23,42,.75); text-shadow:0 1px 0 rgba(255,255,255,.8); background-size:100% 100%; background-repeat:no-repeat; }
     .posterLabel { position:absolute; left:6px; bottom:6px; background:rgba(255,255,255,.88); border-radius:4px; padding:2px 6px; font-size:11px; font-weight:700; }
+    .hero {
+      background: radial-gradient(circle at 20% 20%, #fff4e8 0%, #ffe4cc 42%, #f6d1b4 100%);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 18px;
+      margin-bottom: 14px;
+      display: grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap: 16px;
+      align-items: center;
+      box-shadow: 0 12px 28px rgba(122,65,35,.12);
+    }
+    .hero p { margin: 8px 0 0; color: var(--muted); font-size: 18px; }
+    .brand-line { display:flex; align-items:center; gap:10px; margin-bottom:8px; font-weight:700; color:var(--ink); }
+    .brand-line img { width:42px; height:42px; border-radius:10px; border:1px solid #efc9ad; background:#fff; }
+    .tg-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; align-items:center; }
+    .tg-btn { display:inline-flex; align-items:center; background:var(--accent); color:#fff; text-decoration:none; padding:10px 14px; border-radius:12px; font-weight:700; box-shadow:0 6px 16px rgba(138,72,40,.28); }
+    .tg-link { color: var(--ink); font-weight: 600; text-decoration: none; border-bottom: 1px dashed #9f6a4b; }
+    .hero-right { display:grid; gap:10px; justify-items:center; }
+    .mascot { width:100%; max-width:360px; border-radius:18px; border:1px solid #efc9ad; box-shadow:0 10px 20px rgba(100,53,30,.18); background:#fff7ef; }
+    .qr-box { display:flex; align-items:center; gap:10px; background:#fff9f2; border:1px solid #efc9ad; border-radius:12px; padding:8px 10px; }
+    .qr-box img { width:76px; height:76px; border-radius:8px; background:#fff; }
+    @media (max-width: 880px) { .hero { grid-template-columns: 1fr; } h1 { font-size: 30px; } }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Композиция для доски</h1>
-    <p class="muted">1) Добавь изображение, 2) Подвинь на доске, 3) Напечатай.</p>
+    <section class="hero">
+      <div>
+        <div class="brand-line">
+          <img src="assets/mascot/logo.png" alt="Логотип GPT для учителя" />
+          <span>GPT для учителя</span>
+        </div>
+        <h1>Оформление класса с ИИ-маскотом</h1>
+        <p>Собирай композиции для доски, печатай плитками и вдохновляй учеников стильным визуалом.</p>
+        <div class="tg-row">
+          <a class="tg-btn" href="https://t.me/gpt_for_teacher" target="_blank" rel="noopener noreferrer">Перейти в Telegram-канал</a>
+          <a class="tg-link" href="https://t.me/gpt_for_teacher" target="_blank" rel="noopener noreferrer">t.me/gpt_for_teacher</a>
+        </div>
+      </div>
+      <div class="hero-right">
+        <img id="heroMascot" class="mascot" src="assets/mascot/01.png" alt="Маскот GPT для учителя" />
+        <div class="qr-box">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=https%3A%2F%2Ft.me%2Fgpt_for_teacher" alt="QR-код Telegram канала" />
+          <div style="font-size:13px;color:var(--muted);max-width:170px;">Сканируй QR, чтобы подписаться на канал с идеями для уроков.</div>
+        </div>
+      </div>
+    </section>
+
+    <h2 style="margin-top:2px;">Редактор композиции</h2>
+    <p class="muted">1) Добавь постеры, 2) Подвинь на доске, 3) Скачай в PDF или печатай.</p>
 
     <section class="card">
       <h2>Стена</h2>
@@ -462,6 +516,16 @@
       if(!state.posters.length){ alert('Добавь хотя бы один постер.'); return; }
       try { await downloadPdf(); } catch(e){ alert('Ошибка при создании PDF. Попробуй еще раз.'); }
     });
+
+    const mascotFrames = ['01.png','02.png','03.png','04.png','05.png','06.png','07.png','08.png'];
+    const mascotEl = $('heroMascot');
+    if (mascotEl) {
+      let mascotIndex = 0;
+      setInterval(() => {
+        mascotIndex = (mascotIndex + 1) % mascotFrames.length;
+        mascotEl.src = `assets/mascot/${mascotFrames[mascotIndex]}`;
+      }, 4500);
+    }
 
     ['wallW','wallH','targetSheets','sheetType'].forEach(id=>$(id).addEventListener('input',render));
     render();
