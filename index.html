@@ -25,6 +25,18 @@
     .wall { position:relative; margin:0 auto; border:2px solid #aab9ca; border-radius:8px; background:linear-gradient(140deg,#f8fafc,#eef2f7); min-width:320px; min-height:180px; }
     .poster { position:absolute; border:1px dashed #9db4cf; border-radius:8px; overflow:hidden; background:rgba(255,255,255,.6); box-shadow:0 2px 8px rgba(15,23,42,.08); cursor:grab; }
     .poster.active { border:2px solid var(--accent); }
+    .resize-handle {
+      position: absolute;
+      right: 4px;
+      bottom: 4px;
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      background: rgba(15,118,110,.9);
+      border: 1px solid #ffffff;
+      cursor: nwse-resize;
+      z-index: 6;
+    }
     .tiles { position:absolute; inset:0; display:grid; gap:2px; pointer-events:none; }
     .tile { border:1px solid rgba(148,163,184,.45); border-radius:3px; font-size:11px; display:flex; align-items:center; justify-content:center; color:rgba(15,23,42,.75); text-shadow:0 1px 0 rgba(255,255,255,.8); background-size:100% 100%; background-repeat:no-repeat; }
     .posterLabel { position:absolute; left:6px; bottom:6px; background:rgba(255,255,255,.88); border-radius:4px; padding:2px 6px; font-size:11px; font-weight:700; }
@@ -59,6 +71,7 @@
       <div class="inline">
         <div><label>Листов</label><input id="selectedSheets" type="number" min="1" max="60" /></div>
         <div><label>Тип</label><select id="selectedType"><option value="A4">A4</option><option value="A3">A3</option></select></div>
+        <div><label>Ориентация</label><select id="selectedOrientation"><option value="portrait">Вертикальная</option><option value="landscape">Горизонтальная</option></select></div>
         <button id="deleteSelected" class="danger">Удалить</button>
       </div>
     </section>
@@ -88,17 +101,36 @@
 
     function recalcPoster(p, targetValue, sheetType){
       p.sheet = sheetType || p.sheet;
+      p.orientation = p.orientation || 'portrait';
       const target = Math.max(1, Math.min(60, Number(targetValue) || p.target || 8));
       const sheet = SHEETS[p.sheet] || SHEETS.A4;
-      const tileW = sheet.w - 13, tileH = sheet.h - 13;
+      const baseW = p.orientation === 'landscape' ? sheet.h : sheet.w;
+      const baseH = p.orientation === 'landscape' ? sheet.w : sheet.h;
+      const tileW = baseW - 13, tileH = baseH - 13;
       const g = bestGrid(target, p.w/p.h, tileW/tileH);
       p.target = target; p.cols=g.cols; p.rows=g.rows; p.sheets=g.sheets; p.posterW=g.cols*tileW; p.posterH=g.rows*tileH;
+    }
+
+    function recalcPosterFromSizeMm(p, desiredWmm, desiredHmm){
+      p.orientation = p.orientation || 'portrait';
+      const sheet = SHEETS[p.sheet] || SHEETS.A4;
+      const baseW = p.orientation === 'landscape' ? sheet.h : sheet.w;
+      const baseH = p.orientation === 'landscape' ? sheet.w : sheet.h;
+      const tileW = baseW - 13, tileH = baseH - 13;
+      const cols = Math.max(1, Math.ceil(desiredWmm / tileW));
+      const rows = Math.max(1, Math.ceil(desiredHmm / tileH));
+      p.cols = cols;
+      p.rows = rows;
+      p.sheets = cols * rows;
+      p.target = p.sheets;
+      p.posterW = cols * tileW;
+      p.posterH = rows * tileH;
     }
 
     function makePosterFromPending(){
       if(!state.pending) return null;
       const i=inputVals();
-      const p={ id:id(), url:state.pending.url, w:state.pending.w, h:state.pending.h, sheet:i.sheet, target:i.target, cols:1, rows:1, sheets:1, posterW:0, posterH:0, x:0.5, y:0.5 };
+      const p={ id:id(), url:state.pending.url, w:state.pending.w, h:state.pending.h, sheet:i.sheet, orientation:'portrait', target:i.target, cols:1, rows:1, sheets:1, posterW:0, posterH:0, x:0.5, y:0.5 };
       recalcPoster(p, i.target, i.sheet);
       return p;
     }
@@ -112,6 +144,7 @@
       if(!p) return;
       $('selectedSheets').value = p.target;
       $('selectedType').value = p.sheet;
+      $('selectedOrientation').value = p.orientation || 'portrait';
     }
 
     function render(){
@@ -132,8 +165,9 @@
           t.style.backgroundImage=`linear-gradient(rgba(255,255,255,.15), rgba(255,255,255,.15)), url('${p.url}')`;
           t.style.backgroundSize=`${p.cols*100}% ${p.rows*100}%`; t.style.backgroundPosition=`${bgX}% ${bgY}%`; tiles.appendChild(t);
         }}
-        const lbl=document.createElement('div'); lbl.className='posterLabel'; lbl.textContent=`${p.sheet} · ${p.sheets} л.`;
-        el.appendChild(tiles); el.appendChild(lbl); wall.appendChild(el);
+        const lbl=document.createElement('div'); lbl.className='posterLabel'; lbl.textContent=`${p.sheet} ${p.orientation === 'landscape' ? 'гор.' : 'верт.'} · ${p.sheets} л.`;
+        const handle=document.createElement('div'); handle.className='resize-handle';
+        el.appendChild(tiles); el.appendChild(lbl); el.appendChild(handle); wall.appendChild(el);
       }
       $('totalSheets').textContent=String(total);
       $('stats').textContent = state.posters.length ? `Постеров: ${state.posters.length}.` : 'Добавь хотя бы одно изображение.';
@@ -190,6 +224,12 @@
       const p=state.posters.find(x=>x.id===state.activeId); if(!p) return;
       recalcPoster(p, $('selectedSheets').value, $('selectedType').value); render();
     });
+    $('selectedOrientation').addEventListener('input',()=>{
+      const p=state.posters.find(x=>x.id===state.activeId); if(!p) return;
+      p.orientation = $('selectedOrientation').value;
+      recalcPoster(p, $('selectedSheets').value, $('selectedType').value);
+      render();
+    });
     $('deleteSelected').addEventListener('click',()=>{
       if(!state.activeId) return;
       state.posters = state.posters.filter(p=>p.id!==state.activeId);
@@ -202,14 +242,43 @@
       const pEl=e.target.closest('.poster'); if(!pEl) return;
       const pid=pEl.dataset.id; const p=state.posters.find(x=>x.id===pid); if(!p) return;
       state.activeId=pid;
-      const pt=pointerToWall(e); state.drag={id:pid,x:pt.x,y:pt.y};
+      const pt=pointerToWall(e);
+      const wp=wallPx();
+      const pp=posterPx(p);
+      const cx=Math.round(p.x*wp.w), cy=Math.round(p.y*wp.h);
+      const left=Math.max(0,Math.min(wp.w-pp.w,cx-pp.w/2));
+      const top=Math.max(0,Math.min(wp.h-pp.h,cy-pp.h/2));
+      if (e.target.closest('.resize-handle')) {
+        state.drag={kind:'resize', id:pid, startX:pt.x, startY:pt.y, left, top, startW:pp.w, startH:pp.h};
+      } else {
+        state.drag={kind:'move', id:pid};
+      }
       render();
     });
     window.addEventListener('mousemove',(e)=>{
       if(!state.drag) return;
       const p=state.posters.find(x=>x.id===state.drag.id); if(!p) return;
       const wp=wallPx(); const pt=pointerToWall(e);
-      p.x=Math.max(0,Math.min(1,pt.x/wp.w)); p.y=Math.max(0,Math.min(1,pt.y/wp.h));
+      if (state.drag.kind === 'resize') {
+        const ratio = p.w / p.h;
+        const delta = Math.max(pt.x - state.drag.startX, pt.y - state.drag.startY);
+        let newW = Math.max(60, state.drag.startW + delta);
+        let newH = newW / ratio;
+        if (state.drag.left + newW > wp.w) {
+          newW = wp.w - state.drag.left;
+          newH = newW / ratio;
+        }
+        if (state.drag.top + newH > wp.h) {
+          newH = wp.h - state.drag.top;
+          newW = newH * ratio;
+        }
+        recalcPosterFromSizeMm(p, newW / wp.ppm, newH / wp.ppm);
+        const ppNew = posterPx(p);
+        p.x = Math.max(0, Math.min(1, (state.drag.left + ppNew.w / 2) / wp.w));
+        p.y = Math.max(0, Math.min(1, (state.drag.top + ppNew.h / 2) / wp.h));
+      } else {
+        p.x=Math.max(0,Math.min(1,pt.x/wp.w)); p.y=Math.max(0,Math.min(1,pt.y/wp.h));
+      }
       render();
     });
     window.addEventListener('mouseup',()=>{ state.drag=null; });
