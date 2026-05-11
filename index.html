@@ -1,0 +1,198 @@
+﻿<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Планировщик оформления доски</title>
+  <style>
+    :root {
+      --bg: #f6f7f4;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #64748b;
+      --accent: #0f766e;
+      --line: #dbe1ea;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 20%, #dff7f2 0%, transparent 30%),
+        radial-gradient(circle at 85% 80%, #ffe8ce 0%, transparent 30%),
+        var(--bg);
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 24px; }
+    .card {
+      background: var(--card);
+      border: 1px solid #e7ecf2;
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 14px;
+      box-shadow: 0 8px 22px rgba(15,23,42,.06);
+    }
+    h1 { margin: 0 0 8px; }
+    h2 { margin: 0 0 12px; font-size: 18px; }
+    .muted { color: var(--muted); margin: 0; }
+    .grid { display: grid; gap: 10px; }
+    .fields { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+    label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; }
+    input, select {
+      width: 100%;
+      border: 1px solid #cfd7e3;
+      border-radius: 10px;
+      padding: 9px 10px;
+      font-size: 14px;
+      background: #fff;
+    }
+    .variants { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+    .variant {
+      border-radius: 12px;
+      border: 2px solid transparent;
+      padding: 12px;
+      cursor: pointer;
+      min-height: 92px;
+      transition: .15s ease;
+    }
+    .variant.active { border-color: var(--accent); transform: translateY(-1px); }
+    .variant h3 { margin: 0 0 6px; font-size: 16px; }
+    .variant p { margin: 0; font-size: 13px; }
+    .result strong { font-size: 22px; color: var(--accent); }
+    .wall {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      background: #fafafa;
+      overflow: auto;
+    }
+    .tiles {
+      display: grid;
+      gap: 6px;
+      min-height: 120px;
+    }
+    .tile {
+      border: 1px solid #c8d3e0;
+      border-radius: 6px;
+      padding: 8px 4px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: #334155;
+      background: #fff;
+    }
+    .legend { margin-top: 8px; font-size: 13px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Планировщик оформления доски/стены</h1>
+    <p class="muted">Один HTML-файл: вводите размеры, выбираете композицию и сразу видите количество листов A4 и раскладку.</p>
+
+    <section class="card">
+      <h2>1) Параметры</h2>
+      <div class="grid fields">
+        <div><label>Ширина стены (см)</label><input id="wallW" type="number" value="300" min="30"></div>
+        <div><label>Высота стены (см)</label><input id="wallH" type="number" value="120" min="30"></div>
+        <div><label>Тема</label><input id="theme" value="Весна"></div>
+        <div><label>Мероприятие</label><input id="holiday" value="Последний звонок"></div>
+        <div><label>Поля листа (мм)</label><input id="margin" type="number" value="5" min="0" max="20"></div>
+        <div><label>Нахлест (мм)</label><input id="overlap" type="number" value="3" min="0" max="15"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>2) Композиция</h2>
+      <div class="grid variants" id="variants"></div>
+    </section>
+
+    <section class="card result">
+      <h2>3) Расчет A4</h2>
+      <p>Нужно листов: <strong id="sheetCount">0</strong></p>
+      <p class="muted" id="stats"></p>
+    </section>
+
+    <section class="card">
+      <h2>4) Визуальная раскладка на стене</h2>
+      <div class="wall">
+        <div id="tiles" class="tiles"></div>
+      </div>
+      <p class="legend" id="legend"></p>
+    </section>
+  </div>
+
+  <script>
+    const A4 = { w: 210, h: 297 };
+    const variants = [
+      { id: 'center', name: 'Центр + рамка', subtitle: 'Акцент в центре, спокойные поля', bg: ['#fff7ed', '#ffedd5'] },
+      { id: 'bands', name: 'Горизонтальные ленты', subtitle: 'Ритмичные полосы по высоте', bg: ['#f0fdfa', '#ccfbf1'] },
+      { id: 'diag', name: 'Диагональная динамика', subtitle: 'Активная диагональ и контраст', bg: ['#eff6ff', '#dbeafe'] }
+    ];
+
+    const state = { active: 'center' };
+
+    function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+    function values() {
+      return {
+        wallW: Math.max(30, Number(document.getElementById('wallW').value) || 300),
+        wallH: Math.max(30, Number(document.getElementById('wallH').value) || 120),
+        margin: clamp(Number(document.getElementById('margin').value) || 5, 0, 20),
+        overlap: clamp(Number(document.getElementById('overlap').value) || 3, 0, 15),
+        theme: document.getElementById('theme').value.trim() || 'Тема',
+        holiday: document.getElementById('holiday').value.trim() || 'Событие'
+      };
+    }
+
+    function calc(v) {
+      const wallWmm = v.wallW * 10;
+      const wallHmm = v.wallH * 10;
+      const tileW = A4.w - v.margin * 2 - v.overlap;
+      const tileH = A4.h - v.margin * 2 - v.overlap;
+      const cols = Math.max(1, Math.ceil(wallWmm / tileW));
+      const rows = Math.max(1, Math.ceil(wallHmm / tileH));
+      return { wallWmm, wallHmm, tileW, tileH, cols, rows, sheets: cols * rows };
+    }
+
+    function renderVariants(v) {
+      const el = document.getElementById('variants');
+      el.innerHTML = '';
+      for (const item of variants) {
+        const b = document.createElement('button');
+        b.className = 'variant' + (state.active === item.id ? ' active' : '');
+        b.style.background = `linear-gradient(135deg, ${item.bg[0]}, ${item.bg[1]})`;
+        b.innerHTML = `<h3>${item.name}</h3><p>${item.subtitle}</p><p style="margin-top:6px;color:#475569">${v.holiday}: ${v.theme}</p>`;
+        b.onclick = () => { state.active = item.id; update(); };
+        el.appendChild(b);
+      }
+    }
+
+    function renderTiles(c, activeVariant) {
+      const el = document.getElementById('tiles');
+      el.style.gridTemplateColumns = `repeat(${c.cols}, minmax(40px, 1fr))`;
+      el.innerHTML = '';
+      for (let i = 1; i <= c.sheets; i++) {
+        const d = document.createElement('div');
+        d.className = 'tile';
+        d.style.background = activeVariant.bg[0];
+        d.textContent = i;
+        el.appendChild(d);
+      }
+    }
+
+    function update() {
+      const v = values();
+      const c = calc(v);
+      const active = variants.find(x => x.id === state.active) || variants[0];
+      renderVariants(v);
+      document.getElementById('sheetCount').textContent = String(c.sheets);
+      document.getElementById('stats').textContent = `Сетка: ${c.cols} x ${c.rows}. Стена: ${c.wallWmm} x ${c.wallHmm} мм. Полезная область листа: ${c.tileW.toFixed(1)} x ${c.tileH.toFixed(1)} мм.`;
+      document.getElementById('legend').textContent = `Композиция: ${active.name}. Нумерация идет слева направо, сверху вниз.`;
+      renderTiles(c, active);
+    }
+
+    document.querySelectorAll('input, select').forEach(el => el.addEventListener('input', update));
+    update();
+  </script>
+</body>
+</html>
