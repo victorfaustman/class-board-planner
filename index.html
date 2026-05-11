@@ -3,253 +3,205 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Композиция постеров для доски</title>
+  <title>Композиция для доски</title>
   <style>
     :root { --bg:#f5f6f3; --card:#fff; --text:#1f2937; --muted:#64748b; --line:#d6deea; --accent:#0f766e; }
     * { box-sizing: border-box; }
     body { margin:0; font-family:"Segoe UI",Tahoma,sans-serif; color:var(--text); background:radial-gradient(circle at 15% 20%, #dff7f2 0%, transparent 30%),radial-gradient(circle at 85% 80%, #ffe8ce 0%, transparent 32%),var(--bg); }
-    .wrap { max-width:1160px; margin:0 auto; padding:24px; }
-    .card { background:var(--card); border:1px solid #e5ebf3; border-radius:14px; padding:16px; margin-bottom:14px; box-shadow:0 8px 22px rgba(15,23,42,.06); }
-    h1 { margin:0 0 8px; } h2 { margin:0 0 12px; font-size:18px; }
+    .wrap { max-width:1100px; margin:0 auto; padding:20px; }
+    .card { background:var(--card); border:1px solid #e5ebf3; border-radius:14px; padding:14px; margin-bottom:12px; box-shadow:0 8px 20px rgba(15,23,42,.06); }
+    h1 { margin:0 0 8px; font-size:28px; } h2 { margin:0 0 10px; font-size:17px; }
     .muted { margin:0; color:var(--muted); }
-    .grid { display:grid; gap:10px; } .fields { grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); }
+    .grid { display:grid; gap:10px; } .fields { grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); }
     label { display:block; font-size:13px; font-weight:600; margin-bottom:5px; }
     input,select,button { width:100%; border:1px solid #cdd7e5; border-radius:10px; padding:9px 10px; font-size:14px; background:#fff; }
     button { cursor:pointer; font-weight:600; }
-    .btn-primary { background:var(--accent); color:#fff; border-color:var(--accent); }
-    .btn-ghost { background:#eef2f7; }
-    .row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-    .row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
-    .result strong { color:var(--accent); font-size:24px; }
+    .primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+    .inline { display:flex; gap:8px; align-items:end; }
+    .inline > div { flex:1; }
+    .danger { width:auto; background:#fee2e2; border-color:#fecaca; color:#7f1d1d; }
+    .result strong { color:var(--accent); font-size:22px; }
     .wallWrap { overflow:auto; border:1px solid var(--line); border-radius:12px; padding:10px; background:#fafafa; }
     .wall { position:relative; margin:0 auto; border:2px solid #aab9ca; border-radius:8px; background:linear-gradient(140deg,#f8fafc,#eef2f7); min-width:320px; min-height:180px; }
     .poster { position:absolute; border:1px dashed #9db4cf; border-radius:8px; overflow:hidden; background:rgba(255,255,255,.6); box-shadow:0 2px 8px rgba(15,23,42,.08); cursor:grab; }
     .poster.active { border:2px solid var(--accent); }
-    .poster:active { cursor:grabbing; }
     .tiles { position:absolute; inset:0; display:grid; gap:2px; pointer-events:none; }
     .tile { border:1px solid rgba(148,163,184,.45); border-radius:3px; font-size:11px; display:flex; align-items:center; justify-content:center; color:rgba(15,23,42,.75); text-shadow:0 1px 0 rgba(255,255,255,.8); background-size:100% 100%; background-repeat:no-repeat; }
     .posterLabel { position:absolute; left:6px; bottom:6px; background:rgba(255,255,255,.88); border-radius:4px; padding:2px 6px; font-size:11px; font-weight:700; }
-    .list { display:grid; gap:8px; }
-    .item { border:1px solid #d8e2ef; border-radius:8px; padding:8px; display:flex; justify-content:space-between; align-items:center; gap:10px; }
-    .item.active { border-color:var(--accent); }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Композиция постеров для доски</h1>
-    <p class="muted">Добавляй несколько изображений, двигай их по доске и получай расчет листов для всей композиции.</p>
+    <h1>Композиция для доски</h1>
+    <p class="muted">1) Добавь изображение, 2) Подвинь на доске, 3) Напечатай.</p>
 
     <section class="card">
-      <h2>1) Стена</h2>
+      <h2>Стена</h2>
       <div class="grid fields">
-        <div><label>Ширина стены (см)</label><input id="wallW" type="number" value="300" min="50" /></div>
-        <div><label>Высота стены (см)</label><input id="wallH" type="number" value="120" min="40" /></div>
+        <div><label>Ширина (см)</label><input id="wallW" type="number" value="300" min="50" /></div>
+        <div><label>Высота (см)</label><input id="wallH" type="number" value="120" min="40" /></div>
       </div>
     </section>
 
     <section class="card">
-      <h2>2) Добавить изображение</h2>
+      <h2>Добавить Изображение</h2>
       <div class="grid fields">
         <div><label>Файл</label><input id="imageFile" type="file" accept="image/*" /></div>
         <div><label>Тип листа</label><select id="sheetType"><option value="A4">A4</option><option value="A3">A3</option></select></div>
-        <div><label>Желаемое число листов</label><input id="targetSheets" type="number" value="8" min="1" max="60" /></div>
+        <div><label>Листы (цель)</label><input id="targetSheets" type="number" value="8" min="1" max="60" /></div>
       </div>
-      <div class="row" style="margin-top:10px;">
-        <button id="addPosterBtn" class="btn-primary">Добавить в композицию</button>
-        <button id="removePosterBtn" class="btn-ghost">Удалить выбранное</button>
-      </div>
-      <div class="row3" style="margin-top:10px;">
-        <div>
-          <label>Листы у выбранного постера</label>
-          <input id="selectedSheets" type="number" value="8" min="1" max="60" />
-        </div>
-        <div>
-          <label>Клик по постеру</label>
-          <select id="clickMode">
-            <option value="select">Выбрать и двигать</option>
-            <option value="delete">Удалять по клику</option>
-          </select>
-        </div>
-        <div>
-          <label>&nbsp;</label>
-          <button id="applySheetsBtn" class="btn-primary">Применить листы</button>
-        </div>
+      <div style="margin-top:10px;"><button id="addPosterBtn" class="primary">Добавить на доску</button></div>
+    </section>
+
+    <section class="card" id="editorCard" style="display:none;">
+      <h2>Выбранный Постер</h2>
+      <div class="inline">
+        <div><label>Листов</label><input id="selectedSheets" type="number" min="1" max="60" /></div>
+        <div><label>Тип</label><select id="selectedType"><option value="A4">A4</option><option value="A3">A3</option></select></div>
+        <button id="deleteSelected" class="danger">Удалить</button>
       </div>
     </section>
 
     <section class="card result">
-      <h2>3) Итог</h2>
+      <h2>Итог</h2>
       <p>Всего листов: <strong id="totalSheets">0</strong></p>
       <p class="muted" id="stats"></p>
-      <div class="row" style="margin-top:10px;">
-        <button id="printBtn" class="btn-primary">Печать всех постеров</button>
-        <button id="openPrintBtn" class="btn-ghost">Открыть печатную версию</button>
-      </div>
+      <div style="margin-top:10px;"><button id="printBtn" class="primary">Печать композиции</button></div>
     </section>
 
     <section class="card">
-      <h2>4) Доска (перетаскивание)</h2>
+      <h2>Доска</h2>
       <div class="wallWrap"><div id="wall" class="wall"></div></div>
-      <p class="muted" id="legend" style="margin-top:8px;"></p>
-    </section>
-
-    <section class="card">
-      <h2>5) Слои композиции</h2>
-      <div id="list" class="list"></div>
+      <p class="muted" id="legend" style="margin-top:8px;">Клик по постеру: выбрать. Перетаскивание мышкой: переместить. Delete/Backspace: удалить выбранный.</p>
     </section>
   </div>
 
   <script>
     const SHEETS = { A4:{w:210,h:297}, A3:{w:297,h:420} };
     const state = { posters:[], pending:null, activeId:null, drag:null };
+    const $ = (id)=>document.getElementById(id);
 
-    function id() { return Math.random().toString(36).slice(2,9); }
-    function inputVals(){ return { wallW:Math.max(50,Number(wallW.value)||300), wallH:Math.max(40,Number(wallH.value)||120), target:Math.max(1,Math.min(60,Number(targetSheets.value)||8)), sheet:sheetType.value }; }
+    function id(){ return Math.random().toString(36).slice(2,9); }
+    function inputVals(){ return { wallW:Math.max(50,Number($('wallW').value)||300), wallH:Math.max(40,Number($('wallH').value)||120), target:Math.max(1,Math.min(60,Number($('targetSheets').value)||8)), sheet:$('sheetType').value }; }
     function bestGrid(target,imgRatio,tileRatio){ let best={cols:1,rows:1,sheets:1,score:1e9}; for(let c=1;c<=30;c++){for(let r=1;r<=30;r++){const s=c*r;if(s>60) continue; const pr=(c*tileRatio)/r; const score=Math.abs(Math.log(pr/imgRatio))*2 + Math.abs(s-target)/Math.max(1,target); if(score<best.score) best={cols:c,rows:r,sheets:s,score};}} return best; }
 
-    function recalcPoster(p, targetValue){
+    function recalcPoster(p, targetValue, sheetType){
+      p.sheet = sheetType || p.sheet;
       const target = Math.max(1, Math.min(60, Number(targetValue) || p.target || 8));
       const sheet = SHEETS[p.sheet] || SHEETS.A4;
-      const tileW = sheet.w - 13;
-      const tileH = sheet.h - 13;
-      const tileRatio = tileW / tileH;
-      const imgRatio = p.w / p.h;
-      const g = bestGrid(target, imgRatio, tileRatio);
-      p.target = target;
-      p.cols = g.cols;
-      p.rows = g.rows;
-      p.sheets = g.sheets;
-      p.posterW = g.cols * tileW;
-      p.posterH = g.rows * tileH;
+      const tileW = sheet.w - 13, tileH = sheet.h - 13;
+      const g = bestGrid(target, p.w/p.h, tileW/tileH);
+      p.target = target; p.cols=g.cols; p.rows=g.rows; p.sheets=g.sheets; p.posterW=g.cols*tileW; p.posterH=g.rows*tileH;
     }
 
     function makePosterFromPending(){
       if(!state.pending) return null;
       const i=inputVals();
-      const p = { id:id(), url:state.pending.url, w:state.pending.w, h:state.pending.h, sheet:i.sheet, target:i.target, cols:1, rows:1, sheets:1, posterW:0, posterH:0, x:0.5, y:0.5 };
-      recalcPoster(p, i.target);
+      const p={ id:id(), url:state.pending.url, w:state.pending.w, h:state.pending.h, sheet:i.sheet, target:i.target, cols:1, rows:1, sheets:1, posterW:0, posterH:0, x:0.5, y:0.5 };
+      recalcPoster(p, i.target, i.sheet);
       return p;
     }
 
-    function wallPx(){ const i=inputVals(); const wallWmm=i.wallW*10, wallHmm=i.wallH*10; const ppm=Math.min(900/wallWmm,520/wallHmm); return { wallWmm, wallHmm, w:Math.max(320,Math.round(wallWmm*ppm)), h:Math.max(180,Math.round(wallHmm*ppm)), ppm }; }
+    function wallPx(){ const i=inputVals(); const wallWmm=i.wallW*10, wallHmm=i.wallH*10; const ppm=Math.min(900/wallWmm,520/wallHmm); return { w:Math.max(320,Math.round(wallWmm*ppm)), h:Math.max(180,Math.round(wallHmm*ppm)), ppm }; }
     function posterPx(p){ const wp=wallPx(); return { w:Math.max(90,Math.round(p.posterW*wp.ppm)), h:Math.max(70,Math.round(p.posterH*wp.ppm)) }; }
 
-    function render(){
-      const wp=wallPx(); wall.style.width=wp.w+'px'; wall.style.height=wp.h+'px'; wall.innerHTML='';
-      let total=0;
+    function syncEditor(){
+      const p = state.posters.find(x=>x.id===state.activeId);
+      $('editorCard').style.display = p ? 'block' : 'none';
+      if(!p) return;
+      $('selectedSheets').value = p.target;
+      $('selectedType').value = p.sheet;
+    }
 
+    function render(){
+      const wp=wallPx(); const wall=$('wall'); wall.style.width=wp.w+'px'; wall.style.height=wp.h+'px'; wall.innerHTML='';
+      let total=0;
       for(const p of state.posters){
         total += p.sheets;
         const pp=posterPx(p);
         const el=document.createElement('div'); el.className='poster'+(p.id===state.activeId?' active':''); el.dataset.id=p.id;
         el.style.width=pp.w+'px'; el.style.height=pp.h+'px';
         const cx=Math.round(p.x*wp.w), cy=Math.round(p.y*wp.h);
-        const left=Math.max(0,Math.min(wp.w-pp.w,cx-pp.w/2));
-        const top=Math.max(0,Math.min(wp.h-pp.h,cy-pp.h/2));
-        el.style.left=left+'px'; el.style.top=top+'px';
+        el.style.left=Math.max(0,Math.min(wp.w-pp.w,cx-pp.w/2))+'px';
+        el.style.top=Math.max(0,Math.min(wp.h-pp.h,cy-pp.h/2))+'px';
 
         const tiles=document.createElement('div'); tiles.className='tiles'; tiles.style.gridTemplateColumns=`repeat(${p.cols},1fr)`; tiles.style.gridTemplateRows=`repeat(${p.rows},1fr)`;
         for(let r=0;r<p.rows;r++){ for(let c=0;c<p.cols;c++){ const n=r*p.cols+c+1; const t=document.createElement('div'); t.className='tile'; t.textContent=n;
-          const bgX=p.cols===1?50:(c/(p.cols-1))*100; const bgY=p.rows===1?50:(r/(p.rows-1))*100;
+          const bgX=p.cols===1?50:(c/(p.cols-1))*100, bgY=p.rows===1?50:(r/(p.rows-1))*100;
           t.style.backgroundImage=`linear-gradient(rgba(255,255,255,.15), rgba(255,255,255,.15)), url('${p.url}')`;
           t.style.backgroundSize=`${p.cols*100}% ${p.rows*100}%`; t.style.backgroundPosition=`${bgX}% ${bgY}%`; tiles.appendChild(t);
         }}
-        const lbl=document.createElement('div'); lbl.className='posterLabel'; lbl.textContent=`${p.sheet} | ${p.cols}x${p.rows} | ${p.sheets} л.`;
+        const lbl=document.createElement('div'); lbl.className='posterLabel'; lbl.textContent=`${p.sheet} · ${p.sheets} л.`;
         el.appendChild(tiles); el.appendChild(lbl); wall.appendChild(el);
       }
-
-      totalSheets.textContent=String(total);
-      stats.textContent = state.posters.length===0 ? 'Добавь хотя бы одно изображение.' : `Элементов: ${state.posters.length}. Листов суммарно: ${total}.`;
-      legend.textContent = clickMode.value === 'delete' ? 'Режим удаления включен: клик по постеру удаляет его.' : 'Клик выбирает постер, мышь перетаскивает.';
-
-      const activePoster = state.posters.find(x => x.id === state.activeId);
-      selectedSheets.value = activePoster ? activePoster.target : inputVals().target;
-
-      list.innerHTML='';
-      for(const p of state.posters){
-        const item=document.createElement('div'); item.className='item'+(p.id===state.activeId?' active':'');
-        item.innerHTML=`<div><strong>${p.sheet}</strong> · ${p.cols}x${p.rows} · ${p.sheets} л.</div><button class="btn-ghost" style="width:auto;">Выбрать</button>`;
-        item.querySelector('button').onclick=()=>{state.activeId=p.id; render();};
-        list.appendChild(item);
-      }
+      $('totalSheets').textContent=String(total);
+      $('stats').textContent = state.posters.length ? `Постеров: ${state.posters.length}.` : 'Добавь хотя бы одно изображение.';
+      syncEditor();
     }
 
-    imageFile.addEventListener('change',(e)=>{
+    $('imageFile').addEventListener('change',(e)=>{
       const f=e.target.files&&e.target.files[0]; if(!f) return;
       const rd=new FileReader(); rd.onload=()=>{ const img=new Image(); img.onload=()=>{ state.pending={url:rd.result,w:img.naturalWidth,h:img.naturalHeight}; }; img.src=rd.result; }; rd.readAsDataURL(f);
     });
 
-    addPosterBtn.addEventListener('click',()=>{
+    $('addPosterBtn').addEventListener('click',()=>{
       if(!state.pending){ alert('Сначала загрузи изображение.'); return; }
       const p=makePosterFromPending(); if(!p) return;
       state.posters.push(p); state.activeId=p.id; render();
     });
 
-    removePosterBtn.addEventListener('click',()=>{
-      if(!state.activeId) return;
-      state.posters=state.posters.filter(p=>p.id!==state.activeId); state.activeId=state.posters[0]?.id||null; render();
-    });
-
-    applySheetsBtn.addEventListener('click',()=>{
-      if(!state.activeId) return;
+    $('selectedSheets').addEventListener('input',()=>{
       const p=state.posters.find(x=>x.id===state.activeId); if(!p) return;
-      recalcPoster(p, selectedSheets.value);
+      recalcPoster(p, $('selectedSheets').value, $('selectedType').value); render();
+    });
+    $('selectedType').addEventListener('input',()=>{
+      const p=state.posters.find(x=>x.id===state.activeId); if(!p) return;
+      recalcPoster(p, $('selectedSheets').value, $('selectedType').value); render();
+    });
+    $('deleteSelected').addEventListener('click',()=>{
+      if(!state.activeId) return;
+      state.posters = state.posters.filter(p=>p.id!==state.activeId);
+      state.activeId = state.posters[0]?.id || null;
       render();
     });
 
-    selectedSheets.addEventListener('input',()=>{
-      if(!state.activeId) return;
-      const p=state.posters.find(x=>x.id===state.activeId); if(!p) return;
-      recalcPoster(p, selectedSheets.value);
-      render();
-    });
-
-    function pointerToWall(e){ const r=wall.getBoundingClientRect(); return { x:e.clientX-r.left, y:e.clientY-r.top }; }
-    wall.addEventListener('mousedown',(e)=>{
+    function pointerToWall(e){ const r=$('wall').getBoundingClientRect(); return { x:e.clientX-r.left, y:e.clientY-r.top }; }
+    $('wall').addEventListener('mousedown',(e)=>{
       const pEl=e.target.closest('.poster'); if(!pEl) return;
-      const pid=pEl.dataset.id;
-
-      if (clickMode.value === 'delete') {
-        state.posters = state.posters.filter(x => x.id !== pid);
+      const pid=pEl.dataset.id; const p=state.posters.find(x=>x.id===pid); if(!p) return;
+      state.activeId=pid;
+      const pt=pointerToWall(e); state.drag={id:pid,x:pt.x,y:pt.y};
+      render();
+    });
+    window.addEventListener('mousemove',(e)=>{
+      if(!state.drag) return;
+      const p=state.posters.find(x=>x.id===state.drag.id); if(!p) return;
+      const wp=wallPx(); const pt=pointerToWall(e);
+      p.x=Math.max(0,Math.min(1,pt.x/wp.w)); p.y=Math.max(0,Math.min(1,pt.y/wp.h));
+      render();
+    });
+    window.addEventListener('mouseup',()=>{ state.drag=null; });
+    window.addEventListener('keydown',(e)=>{
+      if((e.key==='Delete' || e.key==='Backspace') && state.activeId){
+        state.posters = state.posters.filter(p=>p.id!==state.activeId);
         state.activeId = state.posters[0]?.id || null;
         render();
-        return;
       }
-
-      const p=state.posters.find(x=>x.id===pid); if(!p) return;
-      state.activeId=pid;
-      const pt=pointerToWall(e);
-      state.drag={id:pid,dx:pt.x,dy:pt.y};
-      render();
     });
-
-    window.addEventListener('mousemove',(e)=>{
-      if(!state.drag || clickMode.value === 'delete') return;
-      const p=state.posters.find(x=>x.id===state.drag.id); if(!p) return;
-      const wp=wallPx(); const pt=pointerToWall(e); p.x=Math.max(0,Math.min(1,pt.x/wp.w)); p.y=Math.max(0,Math.min(1,pt.y/wp.h)); render();
-    });
-
-    window.addEventListener('mouseup',()=>{ state.drag=null; });
 
     function buildPrintHtml(){
       let pages='';
       for(const p of state.posters){
-        for(let r=0;r<p.rows;r++){
-          for(let c=0;c<p.cols;c++){
-            const n=r*p.cols+c+1;
-            const bgX=p.cols===1?50:(c/(p.cols-1))*100;
-            const bgY=p.rows===1?50:(r/(p.rows-1))*100;
-            pages += `<div class="page"><div class="tile" style="background-image:url('${p.url}');background-size:${p.cols*100}% ${p.rows*100}%;background-position:${bgX}% ${bgY}%"><div class="num">${p.sheet} · ${n}/${p.sheets}</div></div></div>`;
-          }
+        for(let r=0;r<p.rows;r++) for(let c=0;c<p.cols;c++){
+          const n=r*p.cols+c+1; const bgX=p.cols===1?50:(c/(p.cols-1))*100, bgY=p.rows===1?50:(r/(p.rows-1))*100;
+          pages += `<div class="page"><div class="tile" style="background-image:url('${p.url}');background-size:${p.cols*100}% ${p.rows*100}%;background-position:${bgX}% ${bgY}%"><div class="num">${p.sheet} · ${n}/${p.sheets}</div></div></div>`;
         }
       }
       return `<!doctype html><html><head><meta charset="UTF-8"><style>@page{size:A4 portrait;margin:8mm}body{margin:0;font-family:Arial}.page{min-height:100vh;display:flex;align-items:center;justify-content:center;page-break-after:always}.page:last-child{page-break-after:auto}.tile{width:100%;aspect-ratio:210/297;border:1px dashed #999;background-repeat:no-repeat;position:relative}.num{position:absolute;left:8px;bottom:8px;background:rgba(255,255,255,.9);padding:2px 6px;border-radius:4px;font-size:12px;font-weight:700}</style></head><body>${pages}</body></html>`;
     }
+    $('printBtn').addEventListener('click',()=>{ if(!state.posters.length){alert('Добавь хотя бы одно изображение.');return;} const w=window.open('','_blank'); if(!w) return; w.document.write(buildPrintHtml()); w.document.close(); setTimeout(()=>w.print(),300); });
 
-    printBtn.addEventListener('click',()=>{ if(state.posters.length===0){alert('Добавь хотя бы одно изображение.');return;} const w=window.open('','_blank'); if(!w) return; w.document.write(buildPrintHtml()); w.document.close(); setTimeout(()=>w.print(),300); });
-    openPrintBtn.addEventListener('click',()=>{ if(state.posters.length===0){alert('Добавь хотя бы одно изображение.');return;} const b=new Blob([buildPrintHtml()],{type:'text/html;charset=utf-8'}); const u=URL.createObjectURL(b); window.open(u,'_blank'); setTimeout(()=>URL.revokeObjectURL(u),10000); });
-
-    [wallW,wallH,targetSheets,sheetType,clickMode].forEach(el=>el.addEventListener('input',render));
+    ['wallW','wallH','targetSheets','sheetType'].forEach(id=>$(id).addEventListener('input',render));
     render();
   </script>
 </body>
