@@ -63,7 +63,7 @@
         <div><label>Листы (цель)</label><input id="targetSheets" type="number" value="8" min="1" max="60" /></div>
       </div>
       <p class="muted" id="fileStatus" style="margin-top:8px;">Файл не выбран.</p>
-      <div style="margin-top:10px;"><button id="addPosterBtn" class="primary" disabled>Добавить на доску</button></div>
+      <div style="margin-top:10px;"><button id="addPosterBtn" class="primary">Добавить на доску</button></div>
     </section>
 
     <section class="card" id="editorCard" style="display:none;">
@@ -169,7 +169,6 @@
       const f=e.target.files&&e.target.files[0]; if(!f) return;
       state.pending = null;
       state.pendingLoading = true;
-      $('addPosterBtn').disabled = true;
       $('fileStatus').textContent = 'Загружаю изображение...';
       const rd=new FileReader();
       rd.onload=()=>{
@@ -177,19 +176,24 @@
         img.onload=()=>{
           state.pending={url:rd.result,w:img.naturalWidth,h:img.naturalHeight};
           state.pendingLoading = false;
-          $('addPosterBtn').disabled = false;
           $('fileStatus').textContent = `Готово: ${f.name} (${img.naturalWidth}x${img.naturalHeight})`;
+          // Fallback UX: сразу добавляем после успешной загрузки.
+          const p = makePosterFromPending();
+          if (p) {
+            state.posters.push(p);
+            state.activeId = p.id;
+            render();
+            $('fileStatus').textContent = `Добавлено: ${f.name} (${img.naturalWidth}x${img.naturalHeight})`;
+          }
         };
         img.onerror=()=>{
           state.pendingLoading = false;
-          $('addPosterBtn').disabled = true;
           $('fileStatus').textContent = 'Ошибка чтения изображения. Выбери другой файл.';
         };
         img.src=rd.result;
       };
       rd.onerror=()=>{
         state.pendingLoading = false;
-        $('addPosterBtn').disabled = true;
         $('fileStatus').textContent = 'Не удалось прочитать файл.';
       };
       rd.readAsDataURL(f);
@@ -200,6 +204,7 @@
       if(!state.pending){ alert('Сначала загрузи изображение.'); return; }
       const p=makePosterFromPending(); if(!p) return;
       state.posters.push(p); state.activeId=p.id; render();
+      $('fileStatus').textContent = 'Постер добавлен на доску.';
     });
 
     $('selectedSheets').addEventListener('input',()=>{
